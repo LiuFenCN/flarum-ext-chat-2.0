@@ -1,5 +1,5 @@
 {
-    "name": "xelson/flarum-ext-chat",
+    "name": "missgamerz/flarum-ext-chat",
     "description": "Realtime Chat for Flarum!",
     "keywords": [
         "chat",
@@ -27,6 +27,10 @@
         {
             "name": "Xelson",
             "homepage": "https://neonsky.ru"
+        },
+        {
+            "name": "MissGamerz",
+            "homepage": "https://networkforgamers.com"
         }
     ],
     "require": {
