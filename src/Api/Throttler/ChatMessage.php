@@ -9,8 +9,9 @@
 namespace Xelson\Chat\Api\Throttler;
 
 use DateTime;
-use Flarum\User\User;
+use Flarum\Http\RequestUtil;
 use Flarum\Settings\SettingsRepositoryInterface;
+use Flarum\User\User;
 
 use Xelson\Chat\Message;
 
@@ -35,7 +36,7 @@ class ChatMessage
 	 */
 	public function __invoke($request): bool
 	{
-		$actor = $request->getAttribute('actor');
+		$actor = RequestUtil::getActor($request);
 
 
 		if (!in_array($request->getAttribute('routeName'), ['discussions.create', 'posts.create'])) {

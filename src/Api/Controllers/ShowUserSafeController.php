@@ -1,42 +1,61 @@
 <?php
-/*
- * This file is part of xelson/flarum-ext-chat
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
 namespace Xelson\Chat\Api\Controllers;
 
-use Flarum\Api\Controller\ShowUserController;
-use Flarum\Api\Serializer\CurrentUserSerializer;
+use Flarum\Api\JsonApi;
+use Flarum\Api\Resource\UserResource;
+use Flarum\Http\RequestUtil;
+use Flarum\User\UserRepository;
 use Illuminate\Support\Arr;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Tobscure\JsonApi\Document;
+use Psr\Http\Server\RequestHandlerInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class ShowUserSafeController extends ShowUserController
+class ShowUserSafeController implements RequestHandlerInterface
 {
-    /**
-     * ShowUserController causes an immediate error if the user does not exist by the request, 
-     * so checking the user for existence turns into an 404 error, which is then displayed 
-     * to the user. Don't beat me if this is a bad solution
-     * 
-     * {@inheritdoc}
-     */
-    protected function data(ServerRequestInterface $request, Document $document)
+    protected JsonApi $api;
+
+    public function __construct(JsonApi $api, UserRepository $users)
+    {
+        $this->api = $api;
+        $this->users = $users;
+    }
+
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $id = Arr::get($request->getQueryParams(), 'id');
+        $actor = RequestUtil::getActor($request);
 
         if (! is_numeric($id)) {
             $id = $this->users->getIdForUsername($id);
         }
 
-        $actor = $request->getAttribute('actor');
+        $user = $this->users->query()
+            ->where('id', $id)
+            ->whereVisibleTo($actor)
+            ->first();
 
-        if ($actor->id == $id) {
-            $this->serializer = CurrentUserSerializer::class;
+        if (! $user) {
+            throw new NotFoundHttpException('User not found');
         }
 
-        return $this->users->query()->where('id', $id)->whereVisibleTo($actor)->first();
+        // Serialize through the core `users` resource show endpoint.
+        $path = $request->getUri()->getPath();
+        $segments = explode('/', trim($path, '/'));
+        $apiIndex = array_search('api', $segments);
+        $base = $apiIndex !== false ? '/' . implode('/', array_slice($segments, 0, $apiIndex + 1)) : '';
+        $newPath = $base . '/users/' . $user->id;
+
+        $uri = $request->getUri()
+            ->withPath($newPath)
+            ->withQuery($request->getUri()->getQuery());
+
+        $showRequest = $request->withMethod('GET')->withUri($uri);
+
+        return $this->api
+            ->forResource(UserResource::class)
+            ->forEndpoint('show')
+            ->handle($showRequest);
     }
 }

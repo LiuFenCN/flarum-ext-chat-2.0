@@ -1,30 +1,23 @@
 <?php
-/*
- * This file is part of xelson/flarum-ext-chat
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
 namespace Xelson\Chat;
 
+use Flarum\Api\Context;
+use Flarum\Api\Resource\ForumResource;
+use Flarum\Api\Schema;
 use Flarum\Extend;
-
-use Flarum\Api\Serializer\ForumSerializer;
-use Illuminate\Contracts\Events\Dispatcher;
-use Xelson\Chat\Api\Controllers\PostMessageController;
-use Xelson\Chat\Api\Controllers\FetchMessageController;
-use Xelson\Chat\Api\Controllers\EditMessageController;
-use Xelson\Chat\Api\Controllers\DeleteMessageController;
-use Xelson\Chat\Api\Controllers\ShowUserSafeController;
-use Xelson\Chat\Api\Controllers\ListChatsController;
-use Xelson\Chat\Api\Controllers\CreateChatController;
-use Xelson\Chat\Api\Controllers\EditChatController;
-use Xelson\Chat\Api\Controllers\DeleteChatController;
-
-
 use Flarum\User\User;
-use Xelson\Chat\Chat;
+use Xelson\Chat\Api\Controllers\CreateChatController;
+use Xelson\Chat\Api\Controllers\DeleteChatController;
+use Xelson\Chat\Api\Controllers\DeleteMessageController;
+use Xelson\Chat\Api\Controllers\EditChatController;
+use Xelson\Chat\Api\Controllers\EditMessageController;
+use Xelson\Chat\Api\Controllers\PostMessageController;
+use Xelson\Chat\Api\Controllers\ShowUserSafeController;
+use Xelson\Chat\Api\Resource\ChatResource;
+use Xelson\Chat\Api\Resource\MessageResource;
+use Xelson\Chat\Api\Throttler\ChatMessage;
+use Xelson\Chat\Listener\PushChatEvents;
 
 return [
     (new Extend\Frontend('admin'))
@@ -37,55 +30,54 @@ return [
 
     (new Extend\Locales(__DIR__ . '/resources/locale')),
 
-    (new Extend\Routes('api'))
-        ->get('/chats', 'neonchat.chats.get', ListChatsController::class)
-        ->post('/chats', 'neonchat.chats.create', CreateChatController::class)
-        ->patch('/chats/{id}', 'neonchat.chats.edit', EditChatController::class)
-        ->delete('/chats/{id}', 'neonchat.chats.delete', DeleteChatController::class)
-        ->get('/chatmessages', 'neonchat.chatmessages.fetch', FetchMessageController::class)
-        ->post('/chatmessages/{id}', 'neonchat.chatmessages.post', PostMessageController::class)
-        ->patch('/chatmessages/{id}', 'neonchat.chatmessages.edit', EditMessageController::class)
-        ->delete('/chatmessages/{id}', 'neonchat.chatmessages.delete', DeleteMessageController::class)
-
-        ->get('/chat/user/{id}', 'neonchat.chat.user', ShowUserSafeController::class),
-
-    (new Extend\Model(User::class))
-        ->relationship('chats', function ($user) {
-
-            return $user->belongsToMany(Chat::class, 'neonchat_chat_user')
-                ->withPivot('joined_at', 'removed_by', 'role', 'readed_at', 'removed_at');
-        }),
-
-    (new Extend\ApiSerializer(ForumSerializer::class))
-        ->attributes(function ($serializer, $model, $attributes) {
-            $actor = $serializer->getActor();
-
+    // Forum-level chat permissions, exposed on the `forum` resource.
+    (new Extend\ApiResource(ForumResource::class))
+        ->fields(function () {
             $permissions = [
                 'xelson-chat.permissions.chat',
                 'xelson-chat.permissions.create',
                 'xelson-chat.permissions.create.channel',
                 'xelson-chat.permissions.enabled',
                 'xelson-chat.permissions.edit',
-                'xelson-chat.permissions.delete'
+                'xelson-chat.permissions.delete',
             ];
 
-            foreach ($permissions as $permission) {
-                $attributes[$permission] = $actor->can($permission);
-            }
-
-            return $attributes;
+            return array_map(function ($permission) {
+                return Schema\Boolean::make($permission)
+                    ->get(function ($forum, Context $context) use ($permission) {
+                        return $context->getActor()->can($permission);
+                    });
+            }, $permissions);
         }),
 
-    (new Extend\ThrottleApi())
-        ->set('chat-message', Api\Throttler\ChatMessage::class),
+    // Chat + Message resources. Their `index` endpoints auto-register
+    // GET /chats and GET /chatmessages (the old ListChatsController /
+    // FetchMessageController are replaced by these resource endpoints).
+    (new Extend\ApiResource(ChatResource::class)),
+    (new Extend\ApiResource(MessageResource::class)),
+
+    (new Extend\Routes('api'))
+        ->post('/chats', 'neonchat.chats.create', CreateChatController::class)
+        ->patch('/chats/{id}', 'neonchat.chats.edit', EditChatController::class)
+        ->delete('/chats/{id}', 'neonchat.chats.delete', DeleteChatController::class)
+        ->post('/chatmessages/{id}', 'neonchat.chatmessages.post', PostMessageController::class)
+        ->patch('/chatmessages/{id}', 'neonchat.chatmessages.edit', EditMessageController::class)
+        ->delete('/chatmessages/{id}', 'neonchat.chatmessages.delete', DeleteMessageController::class)
+        ->get('/chat/user/{id}', 'neonchat.chat.user', ShowUserSafeController::class),
+
+    (new Extend\Model(User::class))
+        ->relationship('chats', function ($user) {
+            return $user->belongsToMany(Chat::class, 'neonchat_chat_user')
+                ->withPivot('joined_at', 'removed_by', 'role', 'readed_at', 'removed_at');
+        }),
 
     (new Extend\Settings())
         ->serializeToForum('xelson-chat.settings.charlimit', 'xelson-chat.settings.charlimit')
         ->serializeToForum('xelson-chat.settings.display.minimize', 'xelson-chat.settings.display.minimize')
         ->serializeToForum('xelson-chat.settings.display.censor', 'xelson-chat.settings.display.censor'),
-     
-    (new Extend\ServiceProvider())
-    ->register(Providers\BlomstraRealtimeProvider::class),
 
-    (new Extend\Event)->subscribe(Listener\PushChatEvents::class)
+    (new Extend\ThrottleApi())
+        ->set('chat-message', ChatMessage::class),
+
+    (new Extend\Event)->subscribe(PushChatEvents::class),
 ];

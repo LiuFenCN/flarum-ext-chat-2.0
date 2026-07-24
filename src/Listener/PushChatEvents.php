@@ -1,22 +1,15 @@
 <?php
 
-/*
- * This file is part of Flarum.
- *
- * For detailed copyright and license information, please view the
- * LICENSE file that was distributed with this source code.
- */
-
 namespace Xelson\Chat\Listener;
 
+use Flarum\Api\JsonApi;
 use Flarum\Http\RequestUtil;
 use Illuminate\Contracts\Events\Dispatcher;
 use Laminas\Diactoros\ServerRequestFactory;
-use Tobscure\JsonApi\Document;
-use Tobscure\JsonApi\Resource;
-use Xelson\Chat\Api\Serializers\ChatSerializer;
-use Xelson\Chat\Api\Serializers\ChatUserSerializer;
-use Xelson\Chat\Api\Serializers\MessageSerializer;
+use Psr\Http\Message\ServerRequestInterface;
+use Xelson\Chat\Api\Resource\ChatResource;
+use Xelson\Chat\Api\Resource\MessageResource;
+use Xelson\Chat\Chat;
 use Xelson\Chat\ChatSocket;
 use Xelson\Chat\Event\Chat\Saved as ChatSaved;
 use Xelson\Chat\Event\Chat\Deleting as ChatDeleting;
@@ -30,14 +23,17 @@ class PushChatEvents
      */
     protected $socket;
 
-    public function __construct(ChatSocket $socket)
+    /**
+     * @var JsonApi
+     */
+    protected $api;
+
+    public function __construct(ChatSocket $socket, JsonApi $api)
     {
         $this->socket = $socket;
+        $this->api = $api;
     }
 
-    /**
-     * @param Dispatcher $events
-     */
     public function subscribe(Dispatcher $events)
     {
         $events->listen(ChatSaved::class, [$this, 'whenChatSaved']);
@@ -46,28 +42,40 @@ class PushChatEvents
         $events->listen(MessageDeleting::class, [$this, 'whenMessageDeleting']);
     }
 
-    protected function buildResponse($data, $actor, $serializerClass, $include = [])
+    /**
+     * Serialize a model through its Flarum 2.0 resource `show` endpoint so the
+     * realtime payload matches what the API would return.
+     */
+    protected function buildResponse(object $model, $actor, string $resourceClass, array $include = []): array
     {
-        $document = resolve(Document::class);
-
+        $resource = $this->api->getResource($resourceClass);
+        $type = $resource->type();
 
         $request = ServerRequestFactory::fromGlobals();
-        $request = RequestUtil::withActor($request, $actor);
+        $basePath = $request->getUri()->getPath();
+        $base = rtrim(dirname($basePath), '/');
 
-        $serializer = resolve($serializerClass);
-        $serializer->setRequest($request);
+        $uri = $request->getUri()
+            ->withPath($base . '/' . $model->id)
+            ->withQuery('include=' . implode(',', $include));
 
-        $element = (new Resource($data, $serializer))
-            ->with($include);
+        $request = RequestUtil::withActor($request, $actor)
+            ->withMethod('GET')
+            ->withUri($uri);
 
-        return $document->setData($element)->jsonSerialize();
+        $response = $this->api
+            ->forResource($resourceClass)
+            ->forEndpoint('show')
+            ->handle($request);
+
+        return json_decode((string) $response->getBody(), true);
     }
 
     public function whenChatSaved(ChatSaved $event)
     {
         $chat = $event->chat;
 
-        $response = $this->buildResponse($chat, $event->actor, ($event->created ? ChatSerializer::class : ChatUserSerializer::class), ['creator', 'users', 'last_message']);
+        $response = $this->buildResponse($chat, $event->actor, ChatResource::class, ['creator', 'users', 'last_message']);
 
         $sendData = [
             'chat' => $response
@@ -88,7 +96,7 @@ class PushChatEvents
     {
         $chat = $event->chat;
 
-        $response = $this->buildResponse($chat, $event->actor, ChatSerializer::class, ['creator', 'users', 'last_message']);
+        $response = $this->buildResponse($chat, $event->actor, ChatResource::class, ['creator', 'users', 'last_message']);
 
         $this->socket->sendChatEvent($chat->id, 'chat.delete', [
             'chat' => $response
@@ -99,7 +107,7 @@ class PushChatEvents
     {
         $message = $event->message;
 
-        $response = $this->buildResponse($message, $event->actor, MessageSerializer::class, ['user', 'deleted_by', 'chat']);
+        $response = $this->buildResponse($message, $event->actor, MessageResource::class, ['user', 'deleted_by', 'chat']);
 
         if ($event->created) {
             $type = 'message.post';
@@ -116,7 +124,7 @@ class PushChatEvents
     {
         $message = $event->message;
 
-        $response = $this->buildResponse($message, $event->actor, MessageSerializer::class, ['user', 'deleted_by', 'chat']);
+        $response = $this->buildResponse($message, $event->actor, MessageResource::class, ['user', 'deleted_by', 'chat']);
 
         $this->socket->sendChatEvent($message->chat_id, 'message.delete', [
             'message' => $response

@@ -1,58 +1,36 @@
 <?php
-/*
- * This file is part of xelson/flarum-ext-chat
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
 namespace Xelson\Chat\Api\Controllers;
 
-use Xelson\Chat\Api\Serializers\MessageSerializer;
-use Xelson\Chat\Commands\DeleteMessage;
-use Flarum\Api\Controller\AbstractShowController;
+use Flarum\Api\JsonApi;
+use Flarum\Http\RequestUtil;
 use Illuminate\Contracts\Bus\Dispatcher;
-use Psr\Http\Message\ServerRequestInterface;
-use Tobscure\JsonApi\Document;
 use Illuminate\Support\Arr;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+use Xelson\Chat\Api\Resource\MessageResource;
+use Xelson\Chat\Commands\DeleteMessage;
 
-class DeleteMessageController extends AbstractShowController
+class DeleteMessageController implements RequestHandlerInterface
 {
-    /**
-     * The serializer instance for this request.
-     *
-     * @var MessageSerializer
-     */
-    public $serializer = MessageSerializer::class;
+    use SerializesChatData;
 
-    /**
-     * @var Dispatcher
-     */
-    protected $bus;
-
-    /**
-     * {@inheritdoc}
-     */
-    public $include = ['user', 'deleted_by', 'chat'];
-
-    /**
-     * @param Dispatcher $bus
-     */
-    public function __construct(Dispatcher $bus)
+    public function __construct(JsonApi $api, Dispatcher $bus)
     {
+        $this->api = $api;
         $this->bus = $bus;
     }
-    /**
-     * @param ServerRequestInterface $request
-     * @return mixed
-     */
-    protected function data(ServerRequestInterface $request, Document $document)
-    {
-        $id = Arr::get($request->getQueryParams(), 'id');
-        $actor = $request->getAttribute('actor');
 
-        return $this->bus->dispatch(
+    public function handle(ServerRequestInterface $request): ResponseInterface
+    {
+        $actor = RequestUtil::getActor($request);
+        $id = Arr::get($request->getQueryParams(), 'id');
+
+        $message = $this->bus->dispatch(
             new DeleteMessage($id, $actor)
         );
+
+        return $this->serializeModel($request, MessageResource::class, $message);
     }
 }
