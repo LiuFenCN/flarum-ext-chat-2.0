@@ -26,7 +26,7 @@ class ChatResource extends AbstractDatabaseResource
      * Only chats the actor can see: public channels (type = 1) or chats the
      * actor is a member of. Mirrors ChatRepository::queryVisible().
      */
-    public function scope(Builder $query, Context $context): void
+    public function scope(Builder $query, \Tobyz\JsonApiServer\Context $context): void
     {
         $actor = $context->getActor();
 

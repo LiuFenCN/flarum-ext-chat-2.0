@@ -27,7 +27,7 @@ class MessageResource extends AbstractDatabaseResource
      * Replicates FetchMessageController: filter by `chat_id`, and optionally
      * fetch messages newer than the `query` (message id) cursor.
      */
-    public function scope(Builder $query, Context $context): void
+    public function scope(Builder $query, \Tobyz\JsonApiServer\Context $context): void
     {
         $params = $context->request->getQueryParams();
 
