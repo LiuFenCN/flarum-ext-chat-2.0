@@ -22,9 +22,9 @@
 
     .UserMention:hover {
         a {
-            color: @glass-text !important;
+            color: var(--glass-text) !important;
         }
-        color: @glass-text !important;
+        color: var(--glass-text) !important;
         background: rgba(255, 255, 255, 0.15);
     }
 
@@ -38,7 +38,7 @@
         -webkit-backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.2);
         opacity: 0.8;
-        color: @glass-text;
+        color: var(--glass-text);
         right: 30px;
         bottom: 70px;
         border-radius: 100px;
@@ -47,7 +47,7 @@
         text-align: center;
         cursor: pointer;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-        .transition(all .2s ease);
+        transition: all .2s ease;
 
         &:hover {
             opacity: 1.0;
@@ -78,13 +78,13 @@
                 display: block;
                 font-size: 25pt;
                 margin: 5px;
-                color: @glass-text;
+                color: var(--glass-text);
                 font-weight: 300;
             }
 
             span {
                 display: block;
-                color: @glass-text-muted;
+                color: var(--glass-text-muted);
             }
         }
 
@@ -147,7 +147,7 @@
             span[data-name]:hover:after {
                 content: attr(data-name);
                 padding: 6px 10px;
-                color: @glass-text;
+                color: var(--glass-text);
                 background: rgba(0, 0, 0, 0.8);
                 backdrop-filter: blur(10px);
                 -webkit-backdrop-filter: blur(10px);
@@ -161,7 +161,7 @@
 
             .event {
                 min-height: 25px;
-                color: @glass-text-muted;
+                color: var(--glass-text-muted);
                 text-align: center;
                 padding: 8px;
                 line-height: 1.5;
@@ -177,7 +177,7 @@
                 }
 
                 .timestamp {
-                    color: @glass-text-muted;
+                    color: var(--glass-text-muted);
                     position: absolute;
                     right: 8px;
                     line-height: 2;
@@ -205,7 +205,7 @@
                     word-break: break-word;
                     white-space: normal;
                     min-height: 30px;
-                    color: @glass-text; // Better text color
+                    color: var(--glass-text); // Better text color
                     line-height: 1.4;
 
                     img {
@@ -340,7 +340,7 @@
 
                     .name {
                         display: inline;
-                        color: @glass-text;
+                        color: var(--glass-text);
                         font-weight: 600;
                         cursor: pointer;
                     }
@@ -351,7 +351,7 @@
 
                         .icon {
                             display: inline-block;
-                            color: @glass-text-muted;
+                            color: var(--glass-text-muted);
                             padding: 0px 5px;
 
                             span {
@@ -381,13 +381,13 @@
                             .Button:hover,
                             .Button:focus {
                                 background: rgba(255, 255, 255, 0.15);
-                                color: @glass-text;
+                                color: var(--glass-text);
                                 border-radius: 6px;
                             }
 
                             .open>.Button {
                                 background: rgba(255, 255, 255, 0.15) !important;
-                                color: @glass-text !important;
+                                color: var(--glass-text) !important;
                                 border-radius: 6px;
                             }
 
@@ -401,7 +401,7 @@
 
                         .timestamp {
                             display: inline;
-                            color: @glass-text-muted;
+                            color: var(--glass-text-muted);
                             cursor: pointer;
                             padding-right: 5px;
                             text-align: right;

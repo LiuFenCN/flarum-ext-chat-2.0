@@ -13,15 +13,44 @@
 @glass-border: rgba(255, 255, 255, 0.1);
 
 // =========================
-// Text colors (defaults: dark mode)
+// Flarum 2.0 compatibility shims
+// 2.0 removed several 1.x single-value theme variables (now split into
+// -dark / -light variants) and dropped the FontAwesome LESS variables +
+// .fa() mixin in favour of FontAwesome 7 CSS classes. The shims below
+// let the legacy rules still compile. They are cosmetic-only until the
+// frontend is fully ported to 2.0.
 // =========================
-body when (@config-dark-mode = true) {
-  @glass-text: rgba(255, 255, 255, 0.95);
-  @glass-text-muted: rgba(255, 255, 255, 0.7);
+@control-danger-bg: @control-danger-bg-light;
+@control-danger-color: @control-danger-color-light;
+
+@fa-var-users-cog: "\f509";
+@fa-var-crown: "\f521";
+@fa-var-trash-alt: "\f2ed";
+@fa-var-times: "\f00d";
+@fa-var-check: "\f00c";
+
+.fa() {
+  font-family: "Font Awesome 6 Free", "FontAwesome";
+  font-weight: 900;
+  display: inline-block;
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: auto;
+  line-height: 1;
 }
 
 // =========================
-// Light mode overrides
+// Text colors — theme-aware via CSS custom properties (Flarum 2.0)
+// Flarum 1.x used the compile-time variable @config-dark-mode; 2.0
+// signals dark mode with [data-theme^='dark'] on the root element, so
+// we expose these as runtime CSS variables that switch with the theme.
 // =========================
-@glass-text: rgba(0, 0, 0, 0.87);
-@glass-text-muted: rgba(0, 0, 0, 0.54);
+:root {
+  --glass-text: rgba(0, 0, 0, 0.87);
+  --glass-text-muted: rgba(0, 0, 0, 0.54);
+}
+
+[data-theme^='dark'] {
+  --glass-text: rgba(255, 255, 255, 0.95);
+  --glass-text-muted: rgba(255, 255, 255, 0.7);
+}

@@ -19,7 +19,7 @@
         margin: 5px 5px 5px 15px;
         outline: none;
         padding: 8px 12px;
-        color: @glass-text;
+        color: var(--glass-text);
         font-size: 14px;
         transition: all 0.2s ease;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -31,27 +31,27 @@
         }
 
         &::placeholder {
-            color: @glass-text-muted;
+            color: var(--glass-text-muted);
         }
 
         &:focus::placeholder {
-            color: @glass-text-muted;
+            color: var(--glass-text-muted);
         }
 
         &:focus:-moz-placeholder {
-            color: @glass-text-muted;
+            color: var(--glass-text-muted);
         }
 
         &:focus::-moz-placeholder {
-            color: @glass-text-muted;
+            color: var(--glass-text-muted);
         }
 
         &:focus:-ms-input-placeholder {
-            color: @glass-text-muted;
+            color: var(--glass-text-muted);
         }
 
         &:focus::-webkit-input-placeholder {
-            color: @glass-text-muted;
+            color: var(--glass-text-muted);
         }
     }
 
@@ -71,7 +71,7 @@
         cursor: pointer;
         border-radius: 8px;
         transition: all 0.2s ease;
-        color: @glass-text-muted;
+        color: var(--glass-text-muted);
 
         .user-select(none);
 
@@ -80,7 +80,7 @@
         }
 
         &.send {
-            color: @glass-text-muted;
+            color: var(--glass-text-muted);
 
             &:hover {
                 color: rgba(101, 226, 186, 0.9); // Modern green
@@ -89,7 +89,7 @@
         }
 
         &.edit {
-            color: @glass-text-muted;
+            color: var(--glass-text-muted);
 
             &:hover {
                 color: rgba(251, 204, 72, 0.9); // Modern yellow
@@ -102,7 +102,7 @@
         display: inline-block;
         text-align: center;
         line-height: 29px;
-        color: @glass-text-muted;
+        color: var(--glass-text-muted);
         float: right;
         padding: 2px 8px;
     }
