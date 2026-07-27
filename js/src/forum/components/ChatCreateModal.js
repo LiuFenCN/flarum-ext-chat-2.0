@@ -26,6 +26,11 @@ export default class ChatCreateModal extends ChatModal {
             return;
         }
 
+        // Log each selected user's ID for debugging 400 errors
+        selected.forEach(function (u, i) {
+            try { console.log('[ChatCreateModal]   selected[' + i + '] id=' + u.id()); } catch (e) { console.log('[ChatCreateModal]   selected[' + i + '] (invalid user)'); }
+        });
+
         // Check if it's a private chat with only one other user
         if (!this.isChannel && selected.length === 1) {
             const otherUser = selected[0];
@@ -125,12 +130,34 @@ export default class ChatCreateModal extends ChatModal {
 
     createNewChat() {
         var selected = this.getSelectedUsers();
-        var userIds = this.toUserIdentifiers(selected);
-        userIds = this.dedupeUserIds(userIds);
-        // Add current user — backend also re-adds actor but we include it for clarity
-        userIds.push({ type: 'users', id: String(app.session.user.id()) });
+        console.log('[ChatCreateModal] createNewChat: selected count=' + selected.length);
 
-        console.log('[ChatCreateModal] createNewChat, userIds=', JSON.stringify(userIds), 'isChannel=', this.isChannel);
+        var userIds = this.toUserIdentifiers(selected);
+        console.log('[ChatCreateModal] toUserIdentifiers result:', JSON.stringify(userIds));
+
+        // CRITICAL: dedupe BEFORE adding actor. The backend also deduplicates but
+        // its check at CreateChatHandler.php:63 throws ChatEditException (400)
+        // on any duplicate — we must never send the same ID twice.
+        userIds = this.dedupeUserIds(userIds);
+        console.log('[ChatCreateModal] after dedupeUserIds:', JSON.stringify(userIds));
+
+        // Add current user as the last element. Backend (line 69) also re-adds actor
+        // after removing it from input, so this is expected.
+        var actorId = String(app.session.user.id());
+        userIds.push({ type: 'users', id: actorId });
+
+        console.log('[ChatCreateModal] FINAL payload users:', JSON.stringify(userIds), 'actor=' + actorId);
+
+        // Final sanity check: ensure no duplicate IDs in the array we're about to send
+        var finalIds = {};
+        for (var i = 0; i < userIds.length; i++) {
+            if (finalIds[userIds[i].id]) {
+                console.error('[ChatCreateModal] DUPLICATE DETECTED: id=' + userIds[i].id + ' at index ' + i + ', aborting create');
+                app.alerts.show({ type: 'error' }, '内部错误：检测到重复用户ID，请刷新重试');
+                return;
+            }
+            finalIds[userIds[i].id] = true;
+        }
 
         app.store
             .createRecord('chats')
@@ -150,7 +177,7 @@ export default class ChatCreateModal extends ChatModal {
             .catch((error) => {
                 console.error('[ChatCreateModal] create error:', error.status, error.message || error);
                 if (error.status === 400 || error.status === 422) {
-                    app.alerts.show({ type: 'error' }, '该聊天已存在，或参数有误');
+                    app.alerts.show({ type: 'error' }, '该聊天已存在，或参数有误（请检查是否选择了重复用户）');
                 } else {
                     app.alerts.show({ type: 'error' }, '创建失败（' + (error.status || '?') + '），请重试');
                 }

@@ -285,19 +285,29 @@ export default class ChatState {
         }
 
         return app.store.find('chatmessages', params).then((r) => {
-            if (r.length) {
+            if (r && r.length) {
                 r.map((model) => {
                     if (options.withFlash) model.isNeedToFlash = true;
                     self.insertChatMessage(model);
                 });
                 if (options.notify) this.messageNotify(r[0]);
+            }
 
-                viewport.loading = false;
-                viewport.loadingQueries[query] = false;
-                //viewport.scroll.autoScroll = false;
+            // ALWAYS reset loading flags, even when r is empty/undefined.
+            // If we don't, the guard at line 272 blocks ALL future polls
+            // permanently — which is why "new messages don't appear" even though
+            // the sidebar shows unread count.
+            viewport.loading = false;
+            viewport.loadingQueries[query] = false;
 
+            if (r && r.length) {
                 m.redraw();
             }
+        }).catch((err) => {
+            console.error('[ChatState] apiFetchChatMessages error:', err);
+            // Reset on error too so polling doesn't get stuck
+            viewport.loading = false;
+            viewport.loadingQueries[query] = false;
         });
     }
 

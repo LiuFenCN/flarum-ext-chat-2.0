@@ -13,6 +13,8 @@ import highlight from 'flarum/common/helpers/highlight';
  * - Use an internal Set (_selectedIds) for O(1) lookup instead of array.some()
  *   on every render; syncs to parent state after each toggle.
  * - All colors reference --chat-accent so they follow the forum theme.
+ * - Mithril v2 constructor does NOT receive props — use app.search.neonchat.
+ * - NEVER clear this.users on API failure; keep previous data as fallback.
  */
 export default class ChatSearchUser {
     constructor(props) {
@@ -45,36 +47,49 @@ export default class ChatSearchUser {
         const storeUsers = (app.store && app.store.all ? app.store.all('users') : []);
         if (storeUsers && storeUsers.length > 0) {
             this.users = storeUsers.filter(u => u && u !== app.session.user);
-            this.loading = false;
+            console.log('[ChatSearchUser] loadUsers: using store users, count=' + this.users.length);
             this._loadFromChatApi('');
             return;
         }
 
+        console.log('[ChatSearchUser] loadUsers: store empty, fetching from API');
         this._loadFromChatApi('');
     }
 
     /**
      * Fetch users from /api/chat-users endpoint.
+     *
+     * IMPORTANT: On success, we REPLACE self.users (so search results replace
+     * the previous list). On FAILURE, we KEEP the existing self.users so the
+     * UI doesn't go blank — this is the key fix for "暂无用户".
      */
     _loadFromChatApi(q) {
         var self = this;
         var apiUrl = (app.forum && app.forum.attribute ? app.forum.attribute('apiUrl') : '') || '/api';
+        var url = apiUrl + '/chat-users?q=' + encodeURIComponent(q) + '&limit=200';
+
+        console.log('[ChatSearchUser] fetch: ' + url);
 
         try {
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', apiUrl + '/chat-users?q=' + encodeURIComponent(q) + '&limit=200', true);
+            xhr.open('GET', url, true);
             xhr.setRequestHeader('Accept', 'application/json');
 
-            var token = document.querySelector('meta[name="csrf-token"]');
-            if (token) xhr.setRequestHeader('X-CSRF-Token', token.getAttribute('content'));
+            // Use session cookie auth (same-origin GET needs no extra header).
+            // DO NOT set X-CSRF-Token for GET — some Flarum configs reject it.
+            // The browser sends cookies automatically for same-origin requests.
 
             xhr.onload = function () {
+                console.log('[ChatSearchUser] XHR status=' + xhr.status + ' q="' + q + '"');
+
                 if (xhr.status >= 200 && xhr.status < 300) {
                     try {
                         var json = JSON.parse(xhr.responseText);
                         var data = json.data || [];
 
-                        self.users = data.map(function (u) {
+                        console.log('[ChatSearchUser] API returned ' + data.length + ' users');
+
+                        var newUsers = data.map(function (u) {
                             var attrs = u.attributes || {};
                             var rawId = String(u.id || '');
                             var rawName = attrs.username || attrs.displayName || '';
@@ -99,32 +114,43 @@ export default class ChatSearchUser {
                             };
                         }).filter(function (u) {
                             var id = u.id();
-                            // Dedupe by id AND exclude the current actor. A duplicate
-                            // here would propagate into usersSelected and make the
-                            // backend throw ChatEditException (duplicate user id, 400).
                             if (!id || id === String(app.session.user && app.session.user.id())) return false;
                             if (self._seenUserIds[id]) return false;
                             self._seenUserIds[id] = true;
                             return true;
                         });
 
+                        // Only replace if we got data. If API returned empty (edge case)
+                        // keep existing users so UI doesn't show "暂无用户".
+                        if (newUsers.length > 0 || !self.users.length) {
+                            self.users = newUsers;
+                        }
+                        // If we had users and API returned empty, silently keep old ones
+
                         self.error = null;
                     } catch (e) {
+                        console.error('[ChatSearchUser] parse error:', e);
                         self.error = 'parse_error';
+                        // DON'T clear self.users on parse error!
                     }
                 } else {
+                    console.warn('[ChatSearchUser] HTTP error: ' + xhr.status);
                     self.error = 'http_' + xhr.status;
+                    // DON'T clear self.users on HTTP error!
                 }
                 self.loading = false;
                 m.redraw();
             };
             xhr.onerror = function () {
+                console.error('[ChatSearchUser] network error');
                 self.error = 'network_error';
+                // DON'T clear self.users on network error!
                 self.loading = false;
                 m.redraw();
             };
             xhr.send();
         } catch (e) {
+            console.error('[ChatSearchUser] XHR init error:', e);
             this.error = String(e.message || e);
             this.loading = false;
             m.redraw();
@@ -192,7 +218,11 @@ export default class ChatSearchUser {
                         onblur={() => { setTimeout(() => { this.hasFocus = false; }, 200); }}
                     />
                     {this.query ? (
-                        <button className="chat-search-clear" onclick={() => { this.query = ''; }}>
+                        <button className="chat-search-clear" onclick={() => {
+                            this.query = '';
+                            // Clearing search MUST reload the full user list
+                            this._loadFromChatApi('');
+                        }}>
                             &#10005;
                         </button>
                     ) : null}
@@ -211,7 +241,6 @@ export default class ChatSearchUser {
                             <small>({this.error})</small>
                         </li>
                     ) : displayed.length > 0 ? [
-                        // No header row — keep it clean
                         displayed.map((user) => {
                             var nameText = '';
                             try { nameText = user.displayName() || user.username() || '?'; } catch (e) { }
