@@ -141,23 +141,27 @@ export default class ChatCreateModal extends ChatModal {
         userIds = this.dedupeUserIds(userIds);
         console.log('[ChatCreateModal] after dedupeUserIds:', JSON.stringify(userIds));
 
-        // Add current user as the last element. Backend (line 69) also re-adds actor
-        // after removing it from input, so this is expected.
-        var actorId = String(app.session.user.id());
-        userIds.push({ type: 'users', id: actorId });
-
-        console.log('[ChatCreateModal] FINAL payload users:', JSON.stringify(userIds), 'actor=' + actorId);
-
-        // Final sanity check: ensure no duplicate IDs in the array we're about to send
+        // Do NOT push actor here — backend CreateChatHandler line 69 always re-adds
+        // $actor after removing from input. Sending actor from frontend risks the
+        // foreach+splice pattern at lines 61-68 producing a duplicate if the
+        // splice doesn't run as expected (e.g. type jank with loose ==).
+        //
+        // Final sanity check: ensure no duplicate IDs whatsoever.
         var finalIds = {};
         for (var i = 0; i < userIds.length; i++) {
+            if (!userIds[i] || !userIds[i].id) {
+                console.error('[ChatCreateModal] skipping null entry at index', i);
+                continue;
+            }
             if (finalIds[userIds[i].id]) {
-                console.error('[ChatCreateModal] DUPLICATE DETECTED: id=' + userIds[i].id + ' at index ' + i + ', aborting create');
-                app.alerts.show({ type: 'error' }, '内部错误：检测到重复用户ID，请刷新重试');
+                console.error('[ChatCreateModal] DUPLICATE DETECTED: id=' + userIds[i].id + ' at index ' + i + ', aborting');
+                app.alerts.show({ type: 'error' }, '内部错误：检测到重复用户ID，请刷新页面重试');
                 return;
             }
             finalIds[userIds[i].id] = true;
         }
+
+        console.log('[ChatCreateModal] FINAL payload users:', JSON.stringify(userIds), '(no actor included — backend adds it)');
 
         app.store
             .createRecord('chats')

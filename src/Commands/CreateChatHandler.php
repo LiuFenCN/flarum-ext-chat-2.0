@@ -52,6 +52,9 @@ class CreateChatHandler
         $attributes = Arr::get($data, 'attributes', []);
         $ip_address = $command->ip_address;
 
+        // DEBUG: log incoming payload so we can diagnose persistent 400 errors
+        error_log('[CreateChatHandler] actor_id=' . $actor->id . ' users_input=' . json_encode($users));
+
         $isChannel = intval($attributes['isChannel']);
 
         $actor->assertCan($isChannel ? 'xelson-chat.permissions.create.channel' : 'xelson-chat.permissions.create');
@@ -85,8 +88,11 @@ class CreateChatHandler
                     count($chatUsers) == 2 &&
                     ($chatUsers[0]->id == $users[0]['id'] || $chatUsers[0]->id == $users[1]['id']) &&
                     ($chatUsers[1]->id == $users[0]['id'] || $chatUsers[1]->id == $users[1]['id'])
-                )
-                    throw new ChatEditException;
+                ) {
+                    // PM chat already exists — return it instead of throwing 400
+                    error_log('[CreateChatHandler] returning existing chat id=' . $chat->id . ' for users ' . json_encode($users));
+                    return $chat;
+                }
             }
         }
 
