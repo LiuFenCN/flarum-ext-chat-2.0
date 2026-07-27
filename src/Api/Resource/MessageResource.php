@@ -73,10 +73,15 @@ class MessageResource extends AbstractDatabaseResource
                 ->get(fn(Message $m) => (int) $m->chat_id),
             Schema\Integer::make('deletedBy')
                 ->get(fn(Message $m) => $m->deleted_by),
-            Schema\Boolean::make('isReaded'),
-            Schema\DateTime::make('createdAt'),
-            Schema\DateTime::make('editedAt'),
-            Schema\Boolean::make('isCensored')
+            // NOTE: frontend Message model reads snake_case attributes
+            // (is_readed / created_at / edited_at / is_censored). Flarum 2.0's
+            // JSON:API server serializes the field name verbatim, so these MUST
+            // stay snake_case or the JS attributes resolve to undefined and any
+            // `.toISOString()` call crashes the chat viewport.
+            Schema\Boolean::make('is_readed'),
+            Schema\DateTime::make('created_at'),
+            Schema\DateTime::make('edited_at'),
+            Schema\Boolean::make('is_censored')
                 ->get(function (Message $message, Context $context) {
                     $settings = resolve(SettingsRepositoryInterface::class);
 

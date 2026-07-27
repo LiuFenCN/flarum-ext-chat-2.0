@@ -173,7 +173,9 @@ export default class ChatState {
     getChatsSortedByLastUpdate() {
         return this.getChats().sort((a, b) => {
             if (b.last_message() && a.last_message()) {
-                return b.last_message()?.created_at() - a.last_message()?.created_at();
+                let ba = b.last_message().created_at();
+                let aa = a.last_message().created_at();
+                return (ba ? ba.getTime() : 0) - (aa ? aa.getTime() : 0);
             }
             return 0;
         });
@@ -206,7 +208,7 @@ export default class ChatState {
 
         let timestamp;
         if (message instanceof Date) timestamp = message.toISOString();
-        else if (message instanceof Message) timestamp = message.created_at().toISOString();
+        else if (message instanceof Message) timestamp = message.created_at() ? message.created_at().toISOString() : new Date(0).toISOString();
 
         this.readingTimeout = setTimeout(() => chat.save({ actions: { reading: timestamp } }), 1000);
     }

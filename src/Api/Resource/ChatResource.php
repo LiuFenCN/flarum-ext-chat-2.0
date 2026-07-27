@@ -65,16 +65,19 @@ class ChatResource extends AbstractDatabaseResource
             Schema\Integer::make('type'),
             Schema\Integer::make('creatorId')
                 ->get(fn(Chat $chat) => (int) $chat->creator_id),
-            Schema\DateTime::make('createdAt'),
+            // NOTE: frontend Chat model reads snake_case date attributes
+            // (created_at / joined_at / readed_at / removed_at). Keep these
+            // snake_case or the JS attributes resolve to undefined.
+            Schema\DateTime::make('created_at'),
 
             // Membership fields for the current actor (read-only, no auto-join).
             Schema\Integer::make('role')
                 ->get($this->pivotValue('role')),
-            Schema\DateTime::make('joinedAt')
+            Schema\DateTime::make('joined_at')
                 ->get($this->pivotDateTime('joined_at')),
-            Schema\DateTime::make('readedAt')
+            Schema\DateTime::make('readed_at')
                 ->get($this->pivotDateTime('readed_at')),
-            Schema\DateTime::make('removedAt')
+            Schema\DateTime::make('removed_at')
                 ->get($this->pivotDateTime('removed_at')),
             Schema\Integer::make('removedBy')
                 ->get($this->pivotValue('removed_by')),

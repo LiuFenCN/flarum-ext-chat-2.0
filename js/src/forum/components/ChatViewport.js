@@ -272,12 +272,12 @@ export default class ChatViewport extends Component {
         if (!this.state.messageEditing && el.scrollTop >= 0) {
             if (el.scrollTop <= 500) {
                 let topMessage = app.chat.getChatMessages((model) => model.chat() == this.model)[0];
-                if (topMessage && topMessage != this.model.first_message()) {
+                if (topMessage && topMessage != this.model.first_message() && topMessage.created_at()) {
                     app.chat.apiFetchChatMessages(this.model, topMessage.created_at().toISOString());
                 }
             } else if (el.scrollTop + el.offsetHeight >= currentHeight - 500) {
                 let bottomMessage = app.chat.getChatMessages((model) => model.chat() == this.model).slice(-1)[0];
-                if (bottomMessage && bottomMessage != this.model.last_message()) {
+                if (bottomMessage && bottomMessage != this.model.last_message() && bottomMessage.created_at()) {
                     app.chat.apiFetchChatMessages(this.model, bottomMessage.created_at().toISOString());
                 }
             }

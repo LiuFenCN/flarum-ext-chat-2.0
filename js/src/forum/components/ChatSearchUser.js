@@ -28,6 +28,10 @@ export default class ChatSearchUser {
         // Synced to/from parent (app.search.neonchat.usersSelected) on each toggle.
         this._selectedIds = new Set();
 
+        // Dedup tracker for the user list (avoid duplicate entries that would
+        // otherwise propagate into usersSelected and break chat creation).
+        this._seenUserIds = {};
+
         // Start loading immediately
         this.loadUsers();
     }
@@ -93,7 +97,16 @@ export default class ChatSearchUser {
                                 color: function () { return color; },
                                 attribute: function (key) { return attrs[key] || null; },
                             };
-                        }).filter(function (u) { return u.id() && u.id() !== String(app.session.user && app.session.user.id()); });
+                        }).filter(function (u) {
+                            var id = u.id();
+                            // Dedupe by id AND exclude the current actor. A duplicate
+                            // here would propagate into usersSelected and make the
+                            // backend throw ChatEditException (duplicate user id, 400).
+                            if (!id || id === String(app.session.user && app.session.user.id())) return false;
+                            if (self._seenUserIds[id]) return false;
+                            self._seenUserIds[id] = true;
+                            return true;
+                        });
 
                         self.error = null;
                     } catch (e) {
@@ -281,12 +294,17 @@ export default class ChatSearchUser {
         try {
             if (app.search && app.search.neonchat && Array.isArray(app.search.neonchat.usersSelected)) {
                 var parentList = app.search.neonchat.usersSelected;
-                // Rebuild parent list from our Set to stay in sync
+                // Rebuild parent list from our Set to stay in sync (dedupe by id)
                 var newList = [];
+                var seen = {};
                 var self = this;
                 // We need to find the actual user objects from this.users
                 this.users.forEach(function (u) {
-                    if (self._selectedIds.has(u.id())) newList.push(u);
+                    var id = u.id();
+                    if (self._selectedIds.has(id) && !seen[id]) {
+                        seen[id] = true;
+                        newList.push(u);
+                    }
                 });
                 // Replace contents (not reassign) so parent's ref stays valid
                 parentList.splice(0, parentList.length);

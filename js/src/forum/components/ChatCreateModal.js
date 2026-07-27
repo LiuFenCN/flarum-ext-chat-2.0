@@ -72,6 +72,7 @@ export default class ChatCreateModal extends ChatModal {
 
     rejoinExistingChat(existingChat, otherUser) {
         var userIds = this.toUserIdentifiers([otherUser]);
+        userIds = this.dedupeUserIds(userIds);
         userIds.push({ type: 'users', id: String(app.session.user.id()) });
 
         console.log('[ChatCreateModal] rejoinExistingChat, userIds=', JSON.stringify(userIds));
@@ -105,9 +106,27 @@ export default class ChatCreateModal extends ChatModal {
         this.hide();
     }
 
+    /**
+     * Remove duplicate ids and the current actor (the backend re-adds the actor
+     * itself). A duplicate user id makes CreateChatHandler throw ChatEditException
+     * with HTTP 400.
+     */
+    dedupeUserIds(userIds) {
+        var seen = {};
+        var actorId = String(app.session.user.id());
+        return userIds.filter(function (u) {
+            if (!u || !u.id) return false;
+            if (u.id === actorId) return false;
+            if (seen[u.id]) return false;
+            seen[u.id] = true;
+            return true;
+        });
+    }
+
     createNewChat() {
         var selected = this.getSelectedUsers();
         var userIds = this.toUserIdentifiers(selected);
+        userIds = this.dedupeUserIds(userIds);
         // Add current user — backend also re-adds actor but we include it for clarity
         userIds.push({ type: 'users', id: String(app.session.user.id()) });
 

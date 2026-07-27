@@ -75,7 +75,7 @@ export default class ChatPreview extends Component {
                 {this.model.last_message() ? this.componentTextPreview() : this.componentTextEmpty()}
             </div>,
             this.model.last_message() ? (
-                <div className="timestamp" title={extractText(this.model.last_message().created_at())}>
+                <div className="timestamp" title={extractText(this.model.last_message().created_at() || '')}>
                     {(this.humanTime = this.componentMessageTime())}
                 </div>
             ) : null,
@@ -91,9 +91,9 @@ export default class ChatPreview extends Component {
                 </div>
                 {this.componentTextPreview()}
             </div>,
-            <div className="timestamp" title={extractText(this.model.last_message().created_at())}>
-                {(this.humanTime = this.componentMessageTime())}
-            </div>,
+                <div className="timestamp" title={extractText(this.model.last_message().created_at() || '')}>
+                    {(this.humanTime = this.componentMessageTime())}
+                </div>,
         ];
     }
 
