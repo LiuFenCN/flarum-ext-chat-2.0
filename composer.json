@@ -1,12 +1,14 @@
 {
     "name": "acolasialiuliu/flarum-ext-chat",
-    "description": "Realtime Chat for Flarum! (Forked from MissGamerz/Xelson, adapted for Flarum 2.0)",
+    "description": "Realtime Chat for Flarum 2.0 (Forked from MissGamerz/Xelson, fully adapted for Flarum 2.0 RC)",
     "keywords": [
         "chat",
         "flarum",
+        "flarum-2.0",
         "xelson",
         "push-edx",
-        "Xelson"
+        "neon-chat",
+        "realtime"
     ],
     "type": "flarum-extension",
     "license": "MIT",
@@ -41,7 +43,7 @@
     "extra": {
         "flarum-extension": {
             "id": "xelson-chat",
-            "title": "Neon Chat",
+            "title": "Neon Chat (Flarum 2.0)",
             "category": "feature",
             "icon": {
                 "image": "icon.svg",
