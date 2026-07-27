@@ -124,10 +124,21 @@ class CreateChatHandler
                 if ($v == $actor->id) $pairs[$v]['role'] = 2;
             }
 
+            // Validate every user_id exists in the users table BEFORE sync().
+            // A missing ID causes PDOException (FK constraint) → ugly raw 500.
+            $validIds = \Flarum\User\User::whereIn('id', array_keys($pairs))->pluck('id')->toArray();
+            $invalidIds = array_diff(array_keys($pairs), array_map('strval', $validIds));
+            if (!empty($invalidIds)) {
+                error_log('[CreateChatHandler] FK would fail — invalid user_ids: ' . json_encode($invalidIds) . ', pairs: ' . json_encode($pairs));
+                // Fall back: remove invalid ids from pairs instead of hard 500
+                foreach ($invalidIds as $bad) unset($pairs[$bad]);
+            }
+
             try {
                 $chat->users()->sync($pairs);
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 $chat->delete();
+                error_log('[CreateChatHandler] sync() failed: ' . $e->getMessage() . ' pairs=' . json_encode($pairs));
                 throw $e;
             }
         } else {

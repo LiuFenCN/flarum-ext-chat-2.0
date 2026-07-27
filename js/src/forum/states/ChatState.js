@@ -269,7 +269,10 @@ export default class ChatState {
         let viewport = this.getViewportState(model);
         let self = this;
 
-        if (viewport.loading || viewport.loadingQueries[query]) return;
+        // Guard: skip if already fetching this exact query.  Return a resolved
+        // Promise (not undefined!) so callers like ChatViewport's _pollTimer can
+        // safely chain .then() without "can't access property 'then'" TypeError.
+        if (viewport.loading || viewport.loadingQueries[query]) return Promise.resolve();
 
         viewport.loading = true;
         viewport.loadingQueries[query] = true;
