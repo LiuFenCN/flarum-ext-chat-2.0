@@ -18,6 +18,8 @@ use Xelson\Chat\Api\Controllers\ShowUserSafeController;
 use Xelson\Chat\Api\Resource\ChatResource;
 use Xelson\Chat\Api\Resource\MessageResource;
 use Xelson\Chat\Api\Throttler\ChatMessage;
+use Xelson\Chat\Console\CleanOldMessagesCommand;
+use Xelson\Chat\Console\UnreadReminderCommand;
 use Xelson\Chat\Listener\PushChatEvents;
 
 return [
@@ -30,6 +32,17 @@ return [
         ->route('/chat', 'chat'),
 
     (new Extend\Locales(__DIR__ . '/resources/locale')),
+
+    // Register console command for message retention cleanup
+    (new Extend\Console())
+        ->command(CleanOldMessagesCommand::class)
+        ->schedule('chat:clean', function ($event) {
+            $event->daily()->withoutOverlapping();
+        })
+        ->command(UnreadReminderCommand::class)
+        ->schedule('chat:unread-reminder', function ($event) {
+            $event->daily()->withoutOverlapping()->at('10:00');
+        }),
 
     // Forum-level chat permissions, exposed on the `forum` resource.
     (new Extend\ApiResource(ForumResource::class))
@@ -79,9 +92,13 @@ return [
         }),
 
     (new Extend\Settings())
-        ->serializeToForum('xelson-chat.settings.charlimit', 'xelson-chat.settings.charlimit')
-        ->serializeToForum('xelson-chat.settings.display.minimize', 'xelson-chat.settings.display.minimize')
-        ->serializeToForum('xelson-chat.settings.display.censor', 'xelson-chat.settings.display.censor'),
+        ->serializeToForum('xelson-chat.settings.charlimit', 'xelson-chat.settings.charlimit', '0')
+        ->serializeToForum('xelson-chat.settings.display.minimize', 'xelson-chat.settings.display.minimize', '0')
+        ->serializeToForum('xelson-chat.settings.display.censor', 'xelson-chat.settings.display.censor', '1')
+        ->serializeToForum('xelson-chat.settings.block_guests', 'xelson-chat.settings.block_guests', '1')
+        ->serializeToForum('xelson-chat.settings.channel_retention', 'xelson-chat.settings.channel_retention', '2')
+        ->serializeToForum('xelson-chat.settings.pm_retention', 'xelson-chat.settings.pm_retention', '30')
+        ->serializeToForum('xelson-chat.settings.email_reminder_days', 'xelson-chat.settings.email_reminder_days', '0'),
 
     (new Extend\ThrottleApi())
         ->set('chat-message', ChatMessage::class),

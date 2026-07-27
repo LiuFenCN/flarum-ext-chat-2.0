@@ -90,6 +90,13 @@ app.initializers.add('acolasialiuliu-chat', (app) => {
       flarumExtend(Application.prototype, 'mount', function () {
         if (!app.forum.attribute('xelson-chat.permissions.enabled')) return;
 
+        // Block guests from using chat when setting is enabled
+        var blockGuests = app.forum.attribute('xelson-chat.settings.block_guests');
+        if (blockGuests && (!app.session.user || app.session.user.isGuest())) {
+          console.log('[chat] Chat is disabled for guests');
+          return;
+        }
+
         app.chat = new ChatState();
 
         var chatEl = document.getElementById('chat');

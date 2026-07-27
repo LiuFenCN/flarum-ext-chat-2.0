@@ -9,6 +9,10 @@ export default function addChatPage() {
     extend(IndexPage.prototype, 'navItems', function (items) {
         if (app.screen() !== 'phone') return;
 
+        // Hide chat link from guests when block_guests is enabled
+        var blockGuests = app.forum && app.forum.attribute('xelson-chat.settings.block_guests');
+        if (blockGuests && (!app.session.user || app.session.user.isGuest())) return;
+
         items.add(
             'chat',
             <LinkButton icon="fas fa-comment" href={app.route('chat')}>

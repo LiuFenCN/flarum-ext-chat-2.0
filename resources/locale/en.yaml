@@ -136,7 +136,7 @@ xelson-chat:
 
     settings:
       title: Chat settings
-      charlimit: Maximum characters in the message
+      charlimit: Maximum characters per message (0 = unlimited)
       floodgate:
         title: Antiflood
         number: Number of messages in a row
@@ -145,3 +145,23 @@ xelson-chat:
         title: Display
         minimize: Minimize initially
         censor: Censoring messages for unauthorized users
+      block_guests: Block guests from using chat
+      block_guests_help: When enabled, unregistered users will not see the chat entry or any chat content.
+      channel_retention: Channel message retention (days)
+      channel_retention_help: Channel messages older than this will be automatically deleted. Set to 0 for permanent storage.
+      pm_retention: Private message retention (days)
+      pm_retention_help: Private messages older than this will be automatically deleted. Set to 0 for permanent storage.
+      retention_unit: days (0 = permanent)
+      email_reminder_days: Unread email reminder (days)
+      email_reminder_days_help: Send email reminder when forum posts or chat messages remain unread for this many days. Set to 0 to disable.
+  email_reminder:
+    subject: 'You have unread messages waiting'
+    body: |
+      Hello {username},
+
+      You have forum posts and/or chat messages that have been unread for over {days} days.
+
+      Please visit the link below to catch up:
+      {forum_url}
+
+      — Neon Chat auto-reminder

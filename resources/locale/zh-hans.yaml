@@ -151,7 +151,7 @@ xelson-chat:
 
     settings:
       title: 聊天室设置
-      charlimit: 限制每条消息的最大字数（不区分中英文）
+      charlimit: 限制每条消息的最大字数（0 = 不限制）
       floodgate:
         title: 防刷屏
         number: 最多可连发消息数
@@ -160,3 +160,23 @@ xelson-chat:
         title: 显示设置
         minimize: 默认最小化
         censor: 对未登录用户隐藏消息内容
+      block_guests: 禁止游客使用聊天室
+      block_guests_help: 开启后，未登录用户将完全看不到聊天入口和聊天内容。
+      channel_retention: 频道消息保留天数
+      channel_retention_help: 频道消息超过此天数后将自动删除。设为 0 表示永久保存。
+      pm_retention: 私聊消息保留天数
+      pm_retention_help: 私聊消息超过此天数后将自动删除。设为 0 表示永久保存。
+      retention_unit: 天（0 = 永久保存）
+      email_reminder_days: 未读消息邮件提醒天数
+      email_reminder_days_help: 论坛帖子和聊天室消息收到但未阅读超过此天数，将发送邮件提醒用户。设为 0 表示不提醒。
+  email_reminder:
+    subject: '您有未阅读的消息等待查看'
+    body: |
+      您好 {username}，
+
+      您在论坛上有超过 {days} 天未阅读的帖子和/或聊天消息。
+
+      请点击以下链接登录查看：
+      {forum_url}
+
+      — Neon Chat 自动提醒
