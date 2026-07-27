@@ -349,10 +349,11 @@ export default class ChatEditModal extends ChatModal {
         const chatId = model.id();
         const me = app.session.user;
 
-        // If the actor is the only active member, disband the chat directly so
-        // we don't leave an empty shell behind — and avoid a leave PATCH that
-        // would 404 on an already-deleted "ghost" entry (realtime/Pusher off).
-        if (this.isOnlyActiveMember()) {
+        // A private chat (PM) should dissolve when any participant leaves — we
+        // never want to leave a one-person shell behind (user requirement).
+        // For channels, only disband when the leaver is the sole remaining
+        // member; otherwise just remove self via a PATCH.
+        if (app.chat.isChatPM(model) || this.isOnlyActiveMember()) {
             this.requestDeleteChat(model, chatId);
             this.hide();
             return;

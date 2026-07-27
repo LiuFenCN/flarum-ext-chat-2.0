@@ -49,11 +49,17 @@ class DeleteChatHandler
             return null;
         }
 
-        $users = $chat->users()->get();
-
-        $actor->assertPermission(
-            ($actor->isAdmin() || $chat->creator_id == $actor->id) && (count($users) > 2 || $chat->type == 1)
-        );
+        // Permission model:
+        //  - Private chats (type 0): ANY participant may dissolve them. Leaving
+        //    a 1:1 PM must not leave a one-person shell behind, so the leaver
+        //    (who is already verified to be a participant by queryVisible above)
+        //    is always allowed to disband.
+        //  - Channels (type 1): only the creator or an admin may disband.
+        if ($chat->type == 0) {
+            $actor->assertPermission(true);
+        } else {
+            $actor->assertPermission($actor->isAdmin() || $chat->creator_id == $actor->id);
+        }
 
         $this->events->dispatch(
             new Deleting($chat, $actor)
