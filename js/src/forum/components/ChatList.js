@@ -1,4 +1,4 @@
-import Component from 'flarum/Component';
+import Component from 'flarum/common/Component';
 import ChatCreateModal from './ChatCreateModal';
 import ChatPreview from './ChatPreview';
 
@@ -8,13 +8,19 @@ export default class ChatList extends Component {
         if (app.chat.getFrameState('beingShownChatsList') || this.attrs.inPage) classes.push('toggled');
         return (
             <div className={classes.join(' ')}>
-                <div className="header">
+            <div className="header">
                     <div className="input-wrapper input--down">
+                        <span className="input-icon" aria-hidden="true">&#128269;</span>
                         <input id="chat-find" bidi={app.chat.q} placeholder={app.translator.trans('xelson-chat.forum.chat.list.placeholder')} />
                     </div>
                     <div
                         className="icon icon-minimize"
                         onclick={this.toggleChat.bind(this)}
+                        role="button"
+                        aria-label={app.translator.trans(
+                            'xelson-chat.forum.toolbar.' + (app.chat.getFrameState('beingShown') ? 'minimize' : 'maximize')
+                        )}
+                        aria-pressed={app.chat.getFrameState('beingShown')}
                         data-title={app.translator.trans(
                             'xelson-chat.forum.toolbar.' + (app.chat.getFrameState('beingShown') ? 'minimize' : 'maximize')
                         )}
@@ -27,6 +33,11 @@ export default class ChatList extends Component {
                         <div
                             className="ToggleButton icon icon-toggle"
                             onclick={this.toggleChatsList.bind(this)}
+                            role="button"
+                            aria-label={app.translator.trans(
+                                'xelson-chat.forum.chat.list.' + (app.chat.getFrameState('beingShownChatsList') ? 'unpin' : 'pin')
+                            )}
+                            aria-pressed={app.chat.getFrameState('beingShownChatsList')}
                             data-title={app.translator.trans(
                                 'xelson-chat.forum.chat.list.' + (app.chat.getFrameState('beingShownChatsList') ? 'unpin' : 'pin')
                             )}

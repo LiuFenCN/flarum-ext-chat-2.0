@@ -13,6 +13,7 @@ use Xelson\Chat\Api\Controllers\DeleteMessageController;
 use Xelson\Chat\Api\Controllers\EditChatController;
 use Xelson\Chat\Api\Controllers\EditMessageController;
 use Xelson\Chat\Api\Controllers\PostMessageController;
+use Xelson\Chat\Api\Controllers\SearchChatUsersController;
 use Xelson\Chat\Api\Controllers\ShowUserSafeController;
 use Xelson\Chat\Api\Resource\ChatResource;
 use Xelson\Chat\Api\Resource\MessageResource;
@@ -59,11 +60,17 @@ return [
     (new Extend\Routes('api'))
         ->post('/chats', 'neonchat.chats.create', CreateChatController::class)
         ->patch('/chats/{id}', 'neonchat.chats.edit', EditChatController::class)
+        // DELETE route (matches real HTTP DELETE); POST route serves as fallback
+        // because Flarum 2.0's app.request() converts DELETE → POST internally
+        // and the JSON:API router may reject POST-on-resource before the method-
+        // override middleware runs.
         ->delete('/chats/{id}', 'neonchat.chats.delete', DeleteChatController::class)
-        ->post('/chatmessages/{id}', 'neonchat.chatmessages.post', PostMessageController::class)
+        ->post('/chats/{id}', 'neonchat.chats.destroy', DeleteChatController::class)
+        ->post('/chatmessages', 'neonchat.chatmessages.post', PostMessageController::class)
         ->patch('/chatmessages/{id}', 'neonchat.chatmessages.edit', EditMessageController::class)
         ->delete('/chatmessages/{id}', 'neonchat.chatmessages.delete', DeleteMessageController::class)
-        ->get('/chat/user/{id}', 'neonchat.chat.user', ShowUserSafeController::class),
+        ->get('/chat/user/{id}', 'neonchat.chat.user', ShowUserSafeController::class)
+        ->get('/chat-users', 'neonchat.chat.searchUsers', SearchChatUsersController::class),
 
     (new Extend\Model(User::class))
         ->relationship('chats', function ($user) {

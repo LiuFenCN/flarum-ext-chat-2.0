@@ -1,5 +1,5 @@
-import Component from 'flarum/Component';
-import LoadingIndicator from 'flarum/components/LoadingIndicator';
+import Component from 'flarum/common/Component';
+import LoadingIndicator from 'flarum/common/components/LoadingIndicator';
 import ChatHeader from './ChatHeader';
 import ChatList from './ChatList';
 import ChatPage from './ChatPage';

@@ -1,8 +1,8 @@
 import ChatMessage from './ChatMessage';
-import Link from 'flarum/components/Link';
-import extractText from 'flarum/utils/extractText';
-import humanTime from 'flarum/utils/humanTime';
-import fullTime from 'flarum/helpers/fullTime';
+import Link from 'flarum/common/components/Link';
+import extractText from 'flarum/common/utils/extractText';
+import humanTime from 'flarum/common/helpers/humanTime';
+import fullTime from 'flarum/common/helpers/fullTime';
 
 export default class ChatEventMessage extends ChatMessage {
     oninit(vnode) {

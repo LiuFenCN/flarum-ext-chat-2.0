@@ -319,12 +319,13 @@
 
                     a {
                         cursor: pointer;
-                        color: rgba(0, 122, 255, 0.8); // iOS blue
+                        color: var(--link-color); // follows forum theme link color
                         text-decoration: none;
                         font-weight: 500;
-                        
+
                         &:hover {
-                            color: rgba(0, 122, 255, 1);
+                            color: var(--link-color);
+                            text-decoration: underline;
                         }
                     }
                 }

@@ -1,7 +1,11 @@
-import Component from 'flarum/Component';
-import Button from 'flarum/components/Button';
+import Component from 'flarum/common/Component';
+import Button from 'flarum/common/components/Button';
 import ChatEditModal from './ChatEditModal';
-import { throttle } from 'flarum/utils/throttleDebounce';
+import { throttle } from 'flarum/common/utils/throttleDebounce';
+
+// Monotonic counter so each live-preview message gets a unique, stable synthetic
+// render key (see ChatViewport.componentChatMessage).
+let previewSeq = 0;
 
 export default class ChatInput extends Component {
     oninit(vnode) {
@@ -164,6 +168,10 @@ export default class ChatInput extends Component {
                 attributes: { message: ' ', created_at: 0 },
                 relationships: { user: app.session.user, chat: this.model },
             });
+            // Stable synthetic key for the message list (Flarum clears the id to
+            // undefined before sending, so the real numeric id can't be used as a
+            // render key during the optimistic phase — see ChatViewport).
+            this.state.input.previewModel._renderKey = 'chat-preview-' + ++previewSeq;
             Object.assign(this.state.input.previewModel, { isEditing: true, isNeedToFlash: true, content });
         } else this.state.input.previewModel.isNeedToFlash = true;
 

@@ -1,8 +1,8 @@
-import humanTime from 'flarum/utils/humanTime';
-import Component from 'flarum/Component';
-import classList from 'flarum/utils/classList';
-import extractText from 'flarum/utils/extractText';
-import SubtreeRetainer from 'flarum/utils/SubtreeRetainer';
+import humanTime from 'flarum/common/helpers/humanTime';
+import Component from 'flarum/common/Component';
+import classList from 'flarum/common/utils/classList';
+import extractText from 'flarum/common/utils/extractText';
+import SubtreeRetainer from 'flarum/common/utils/SubtreeRetainer';
 
 import ChatAvatar from './ChatAvatar';
 

@@ -1,5 +1,5 @@
-import Component from 'flarum/Component';
-import Stream from 'flarum/utils/Stream';
+import Component from 'flarum/common/Component';
+import Stream from 'flarum/common/utils/Stream';
 
 export default class ColorInput extends Component {
     view() {
@@ -17,7 +17,7 @@ export default class ColorInput extends Component {
                         onupdate={options.inputOnUpdate}
                         color={options.stream()}
                     />
-                    <color className="Chat-FullColor" />
+                    <span className="Chat-FullColor" style={{ backgroundColor: options.stream() || '#000' }} />
                 </div>
             </div>,
         ];

@@ -1,9 +1,9 @@
-import Button from 'flarum/components/Button';
-import classList from 'flarum/utils/classList';
+import Button from 'flarum/common/components/Button';
+import classList from 'flarum/common/utils/classList';
 
 import ChatSearchUser from './ChatSearchUser';
 import ChatModal from './ChatModal';
-import Stream from 'flarum/utils/Stream';
+import Stream from 'flarum/common/utils/Stream';
 
 export default class ChatCreateModal extends ChatModal {
     oninit(vnode) {

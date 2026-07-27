@@ -16,6 +16,8 @@ class Message extends AbstractModel
 {
     protected $table = 'neonchat_messages';
 
+    public $timestamps = false;
+
     protected $dates = ['created_at', 'edited_at'];
 
     /**

@@ -1,6 +1,6 @@
-import Component from 'flarum/Component';
-import Link from 'flarum/components/Link';
-import ItemList from 'flarum/utils/ItemList';
+import Component from 'flarum/common/Component';
+import Link from 'flarum/common/components/Link';
+import ItemList from 'flarum/common/utils/ItemList';
 
 import ChatEditModal from './ChatEditModal';
 

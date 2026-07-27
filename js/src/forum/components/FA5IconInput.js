@@ -1,7 +1,7 @@
-import Component from 'flarum/Component';
-import Stream from 'flarum/utils/Stream';
+import Component from 'flarum/common/Component';
+import Stream from 'flarum/common/utils/Stream';
 import { fa5IconsList } from '../resources';
-import highlight from 'flarum/helpers/highlight';
+import highlight from 'flarum/common/helpers/highlight';
 
 export default class FA5IconInput extends Component {
     oninit(vnode) {
@@ -34,9 +34,9 @@ export default class FA5IconInput extends Component {
                             this.attrs.stream(icon);
                         }}
                     >
-                        <icon className="Chat-FullColor">
+                        <span className="Chat-FullColor">
                             <i className={icon}></i>
-                        </icon>
+                        </span>
                         <span>{highlight(icon, inputIcon)}</span>
                     </li>
                 ))}
@@ -61,9 +61,9 @@ export default class FA5IconInput extends Component {
                         onclick={() => (this.inputIconHasFocus = true)}
                         onkeypress={(e) => (this.inputIconHasFocus = !(e.keyCode == 13))}
                     />
-                    <icon className="Chat-FullColor">
+                    <span className="Chat-FullColor">
                         <i className={options.stream()} />
-                    </icon>
+                    </span>
                     {this.inputIconHasFocus ? this.dropdownIconMatches(options.stream) : null}
                 </div>
             </div>,

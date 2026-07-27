@@ -1,11 +1,11 @@
-import Button from 'flarum/components/Button';
-import Dropdown from 'flarum/components/Dropdown';
-import classList from 'flarum/utils/classList';
-import Model from 'flarum/Model';
-import Group from 'flarum/models/Group';
+import Button from 'flarum/common/components/Button';
+import Dropdown from 'flarum/common/components/Dropdown';
+import classList from 'flarum/common/utils/classList';
+import Model from 'flarum/common/Model';
+import Group from 'flarum/common/models/Group';
 
 import ChatModal from './ChatModal';
-import Stream from 'flarum/utils/Stream';
+import Stream from 'flarum/common/utils/Stream';
 
 export default class ChatEditModal extends ChatModal {
     oninit(vnode) {
@@ -24,10 +24,21 @@ export default class ChatEditModal extends ChatModal {
 
         this.isLocalModerator = this.isModer(app.session.user);
         this.isLocalLeaved = !this.initialUsers.includes(app.session.user);
+
+        // Creator-leave state machine:
+        // null       → normal leave button (just leaves)
+        // 'confirm'  → show 3 options (transfer / disband / cancel)
+        // 'transfer' → show user picker for ownership transfer
+        this.leaveState = null;
+        this.transferTarget = null;
     }
 
     title() {
         return app.translator.trans('xelson-chat.forum.chat.edit_modal.title');
+    }
+
+    className() {
+        return 'ChatModal Modal--medium';
     }
 
     onsubmit() {
@@ -186,6 +197,14 @@ export default class ChatEditModal extends ChatModal {
     }
 
     componentFormButtons() {
+        // Creator-leave flow: show options panel instead of normal buttons
+        if (this.leaveState === 'confirm') {
+            return this.componentCreatorLeaveConfirm();
+        }
+        if (this.leaveState === 'transfer') {
+            return this.componentCreatorLeaveTransfer();
+        }
+
         let buttons = [];
 
         if (this.isLocalModerator && !app.chat.isChatPM(this.model))
@@ -214,26 +233,233 @@ export default class ChatEditModal extends ChatModal {
         return buttons;
     }
 
+    getTransferCandidates() {
+        // Return active users excluding current user
+        return (this.model.users() || []).filter((u) => {
+            if (!u) return false;
+            if (u.id() == app.session.user.id()) return false;
+            const pivot = u.chat_pivot(this.model.id());
+            if (!pivot) return false;
+            return !pivot.removed_at();
+        });
+    }
+
+    componentCreatorLeaveConfirm() {
+        return (
+            <div className="creator-leave-panel">
+                <label className="creator-leave-label">
+                    {app.translator.trans('xelson-chat.forum.chat.edit_modal.creator_leave.title')}
+                </label>
+                <Button className="Button Button--primary Button--block" onclick={() => { this.leaveState = 'transfer'; this.transferTarget = null; m.redraw(); }}>
+                    {app.translator.trans('xelson-chat.forum.chat.edit_modal.creator_leave.transfer')}
+                </Button>
+                <Button className="Button Button--danger Button--block" onclick={() => this.doDisband()}>
+                    {app.translator.trans('xelson-chat.forum.chat.edit_modal.creator_leave.disband')}
+                </Button>
+                <Button className="Button Button--flat Button--block" onclick={() => { this.leaveState = null; m.redraw(); }}>
+                    {app.translator.trans('xelson-chat.forum.chat.edit_modal.creator_leave.cancel')}
+                </Button>
+            </div>
+        );
+    }
+
+    componentCreatorLeaveTransfer() {
+        const candidates = this.getTransferCandidates();
+
+        return (
+            <div className="creator-leave-panel">
+                <label className="creator-leave-label">
+                    {app.translator.trans('xelson-chat.forum.chat.edit_modal.creator_leave.select_owner')}
+                </label>
+                <div className="transfer-user-list">
+                    {candidates.length === 0 ? (
+                        <p className="transfer-user-empty">
+                            {app.translator.trans('xelson-chat.forum.chat.edit_modal.creator_leave.no_users')}
+                        </p>
+                    ) : candidates.map((user) => {
+                        const isSelected = this.transferTarget && this.transferTarget.id() === user.id();
+                        return (
+                            <div
+                                className={'transfer-user-item' + (isSelected ? ' selected' : '')}
+                                onclick={() => { this.transferTarget = user; m.redraw(); }}
+                            >
+                                <span className="transfer-user-avatar">
+                                    {user.avatarUrl() ? (
+                                        <img src={user.avatarUrl()} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+                                    ) : (
+                                        <span className="transfer-user-avatar-placeholder" style={{ width: '32px', height: '32px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ccc', color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>{user.displayName().charAt(0).toUpperCase()}</span>
+                                    )}
+                                </span>
+                                <span className="transfer-user-name">{user.displayName()}</span>
+                                {isSelected ? <span className="transfer-check">✓</span> : null}
+                            </div>
+                        );
+                    })}
+                </div>
+                <Button
+                    className="Button Button--primary Button--block"
+                    onclick={() => this.doTransfer()}
+                    disabled={!this.transferTarget}
+                    style={{ marginTop: 12 }}
+                >
+                    {app.translator.trans('xelson-chat.forum.chat.edit_modal.creator_leave.confirm_transfer')}
+                </Button>
+                <Button className="Button Button--flat Button--block" onclick={() => { this.leaveState = 'confirm'; this.transferTarget = null; m.redraw(); }}>
+                    {app.translator.trans('xelson-chat.forum.chat.edit_modal.creator_leave.back')}
+                </Button>
+            </div>
+        );
+    }
+
     onleave() {
         if (!this.isLocalLeaved) {
-            this.model
-                .save({
-                    users: { removed: [Model.getIdentifier(app.session.user)] },
-                    relationships: { users: this.getSelectedUsers() },
-                })
-                .then((e) => m.redraw());
+            // Currently in the chat — leave action
+            if (this.isCreator(app.session.user) && !app.chat.isChatPM(this.model) && !this.isOnlyActiveMember()) {
+                // Creator of a channel/group with other members — show
+                // transfer/disband options. If the creator is the *only* member,
+                // skip the panel and just disband (handled in doLeave).
+                this.leaveState = 'confirm';
+                this.transferTarget = null;
+                m.redraw();
+            } else {
+                // Normal member, or sole member (creator or not) — leave/disband
+                this.doLeave();
+            }
         } else {
-            this.getSelectedUsers().push(app.session.user);
+            // Already left — return to chat
+            this.doReturn();
+        }
+    }
 
-            this.model
-                .save({
-                    users: { added: [Model.getIdentifier(app.session.user)] },
-                    relationships: { users: this.getSelectedUsers() },
-                })
-                .then((e) => m.redraw());
+    // True when the current user is the only *active* (not removed) member of
+    // this chat. In that case leaving should disband the chat outright.
+    isOnlyActiveMember() {
+        const model = this.model;
+        const me = app.session.user;
+        const active = (model.users() || []).filter((u) => {
+            if (!u) return false;
+            const pivot = u.chat_pivot(model.id());
+            return pivot && !pivot.removed_at();
+        });
+        return active.length === 1 && active[0].id() == me.id();
+    }
+
+    doLeave() {
+        const model = this.model;
+        const chatId = model.id();
+        const me = app.session.user;
+
+        // If the actor is the only active member, disband the chat directly so
+        // we don't leave an empty shell behind — and avoid a leave PATCH that
+        // would 404 on an already-deleted "ghost" entry (realtime/Pusher off).
+        if (this.isOnlyActiveMember()) {
+            this.requestDeleteChat(model, chatId);
+            this.hide();
+            return;
         }
 
+        model
+            .save({
+                users: { removed: [Model.getIdentifier(me)] },
+                relationships: { users: this.getSelectedUsers() },
+            })
+            .then(() => {
+                this.leaveState = null;
+                m.redraw();
+            })
+            .catch((err) => {
+                // A stale/ghost chat (deleted elsewhere while Pusher is off)
+                // returns 404 from the edit handler. Treat it as gone and drop
+                // it from the local store instead of surfacing an uncaught error.
+                if (err && err.status === 404) {
+                    app.chat.deleteChat(model);
+                    app.store.remove(model);
+                    this.leaveState = null;
+                } else {
+                    console.error('[ChatLeave] failed:', err);
+                }
+                m.redraw();
+            });
+
         this.hide();
+    }
+
+    doReturn() {
+        this.getSelectedUsers().push(app.session.user);
+
+        this.model
+            .save({
+                users: { added: [Model.getIdentifier(app.session.user)] },
+                relationships: { users: this.getSelectedUsers() },
+            })
+            .then(() => {
+                this.leaveState = null;
+                m.redraw();
+            })
+            .catch((err) => {
+                console.error('[ChatReturn] failed:', err);
+                m.redraw();
+            });
+
+        this.hide();
+    }
+
+    // Sends a real HTTP DELETE to disband a chat. Tolerates 404 so a
+    // stale/ghost client entry is dropped cleanly (DeleteChatHandler is
+    // idempotent). Shared by the explicit delete button and auto-disband.
+    requestDeleteChat(model, chatId) {
+        const xhr = new XMLHttpRequest();
+        xhr.open('DELETE', app.forum.attribute('apiUrl') + '/chats/' + chatId, true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.setRequestHeader('X-CSRF-Token', app.session.csrfToken);
+        xhr.onload = function () {
+            if (xhr.status >= 200 && xhr.status < 300 || xhr.status === 404) {
+                app.chat.deleteChat(model);
+                app.store.remove(model);
+            } else {
+                console.error('[ChatDelete] failed:', xhr.status, xhr.responseText);
+            }
+            m.redraw();
+        };
+        xhr.onerror = function () { console.error('[ChatDelete] XHR error:', xhr.status); };
+        xhr.send();
+    }
+
+    doTransfer() {
+        if (!this.transferTarget) return;
+
+        const targetId = Number(this.transferTarget.id());
+        const selfId = app.session.user.id();
+
+        // Transfer ownership: set target's role to 2 (creator), then remove self
+        // The backend (EditChatHandler) handles both `edited` (role changes) and
+        // `removed` (member removal) in a single save() call.
+        this.model
+            .save({
+                users: {
+                    edited: [{ id: targetId, role: 2 }],
+                    removed: [Model.getIdentifier(app.session.user)],
+                },
+                relationships: { users: this.getSelectedUsers() },
+            })
+            .then(() => {
+                this.leaveState = null;
+                this.transferTarget = null;
+                app.chat.deleteChat(this.model);
+                app.store.remove(this.model);
+                m.redraw();
+            });
+
+        this.hide();
+    }
+
+    doDisband() {
+        // Reuse existing delete flow — confirm by typing channel name
+        this.leaveState = null;
+        this.deleteState = 0;
+        // Open the delete confirmation inline
+        this.deleteState = 1;
+        m.redraw();
     }
 
     isCanEditChannel() {
@@ -281,9 +507,8 @@ export default class ChatEditModal extends ChatModal {
             }
             case 1: {
                 if (this.isValidTitleCopy()) {
-                    app.chat.deleteChat(this.model);
-                    this.model.delete();
-
+                    // Native DELETE (idempotent handler) — see requestDeleteChat.
+                    this.requestDeleteChat(this.model, this.model.id());
                     this.hide();
                 }
                 break;
@@ -292,10 +517,61 @@ export default class ChatEditModal extends ChatModal {
     }
 
     content() {
+        const isPM = app.chat.isChatPM(this.model);
+        const isChannel = !!this.model.type();
+
+        // Build list of non-PM chats for the channel selector
+        const allChats = (app.chat.getChats() || []).filter(c => c && !app.chat.isChatPM(c));
+
         return (
             <div className="Modal-body">
                 <div class="Form-group InputTitle">
+                    {/* Channel type badge */}
+                    <div className="chat-type-badge">
+                        <span className={'badge badge--' + (isPM ? 'pm' : (isChannel ? 'channel' : 'group'))}>
+                            {isPM
+                                ? app.translator.trans('xelson-chat.forum.chat.list.add_modal.chat')
+                                : (isChannel
+                                    ? app.translator.trans('xelson-chat.forum.chat.list.add_modal.channel')
+                                    : app.translator.trans('xelson-chat.forum.chat.edit_modal.group_chat'))}
+                        </span>
+                        {this.model.id() ? <span className="chat-id">ID: {this.model.id()}</span> : null}
+                    </div>
+
+                    {/* Channel selector dropdown — lets admin pick which channel to edit */}
+                    {!isPM && allChats.length > 1 ? (
+                        <div className="channel-selector-wrap" style={{ marginBottom: 12 }}>
+                            <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>
+                                {app.translator.trans('xelson-chat.forum.chat.edit_modal.select_channel') || '切换管理的频道'}
+                            </label>
+                            <select
+                                class="FormControl"
+                                onchange={(e) => {
+                                    const targetId = e.target.value;
+                                    if (targetId && targetId !== String(this.model.id())) {
+                                        const target = allChats.find(c => String(c.id()) === targetId);
+                                        if (target) {
+                                            // Close current and reopen with selected chat
+                                            this.hide();
+                                            // Use setTimeout to avoid modal conflicts
+                                            setTimeout(() => {
+                                                app.modal.show(ChatEditModal, { model: target });
+                                            }, 300);
+                                        }
+                                    }
+                                }}
+                            >
+                                {allChats.map(c => (
+                                    <option value={String(c.id())} selected={c.id() === this.model.id()}>
+                                        {(c.title() || '#' + c.id()) + (!!c.type() ? ' [频道]' : ' [群聊]')}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    ) : null}
+
                     {this.componentForm()}
+
                     <div className="ButtonsPadding"></div>
                     {this.componentFormButtons()}
                 </div>

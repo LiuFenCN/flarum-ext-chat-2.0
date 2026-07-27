@@ -1,5 +1,5 @@
-import Component from 'flarum/Component';
-import LoadingIndicator from 'flarum/components/LoadingIndicator';
+import Component from 'flarum/common/Component';
+import LoadingIndicator from 'flarum/common/components/LoadingIndicator';
 
 import ChatInput from './ChatInput';
 import ChatMessage from './ChatMessage';
@@ -95,7 +95,12 @@ export default class ChatViewport extends Component {
     }
 
     componentChatMessage(model) {
-        return model.type() ? <ChatEventMessage key={model.id()} model={model} /> : <ChatMessage key={model.id()} model={model} />;
+        // Flarum's save() only treats `undefined` id as "new", so the live-preview
+        // message has its id cleared to undefined before being sent. Give it a
+        // stable synthetic key so the message list fragment stays consistently
+        // keyed — mixing keyed and unkeyed vnodes throws "fragments keys".
+        const key = model.id() != null ? model.id() : model._renderKey;
+        return model.type() ? <ChatEventMessage key={key} model={model} /> : <ChatMessage key={key} model={model} />;
     }
 
     componentsChatMessages(chat) {

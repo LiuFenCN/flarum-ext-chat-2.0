@@ -1,12 +1,12 @@
 import Message from '../models/Message';
 
-import Model from 'flarum/Model';
-import Stream from 'flarum/utils/Stream';
-import Link from 'flarum/components/Link';
+import Model from 'flarum/common/Model';
+import Stream from 'flarum/common/utils/Stream';
+import Link from 'flarum/common/components/Link';
 
 import * as resources from '../resources';
 import ViewportState from './ViewportState';
-import { throttle } from 'flarum/utils/throttleDebounce';
+import { throttle } from 'flarum/common/utils/throttleDebounce';
 
 var refAudio = new Audio();
 refAudio.src = resources.base64AudioNotificationRef;
@@ -29,7 +29,9 @@ export default class ChatState {
         let neonchatState = JSON.parse(localStorage.getItem('neonchat')) ?? {};
 
         this.frameState = {
-            beingShown: neonchatState.beingShown ?? app.forum.attribute('xelson-chat.settings.display.minimize'),
+            // Default to expanded (visible) unless the admin explicitly set
+            // "minimize by default" OR the user previously collapsed it.
+            beingShown: neonchatState.beingShown ?? !(app.forum.attribute('xelson-chat.settings.display.minimize')),
             beingShownChatsList: neonchatState.beingShownChatsList ?? 0,
             isMuted: neonchatState.isMuted ?? false,
             notify: neonchatState.notify ?? false,
@@ -270,7 +272,17 @@ export default class ChatState {
         viewport.loading = true;
         viewport.loadingQueries[query] = true;
 
-        return app.store.find('chatmessages', { chat_id: model.id(), query }).then((r) => {
+        // Build params: always include chat_id; only include query cursor when
+        // it is numeric (message-ID based).  ISO date strings are NOT accepted
+        // by MessageResource::scope() AND Flarum 2.0's JSON:API server rejects
+        // unknown query parameters with 400 "Invalid query parameter".
+        // Date-based pagination needs a separate filter param (TODO).
+        let params = { chat_id: model.id() };
+        if (query != null && !isNaN(Number(query))) {
+            params.query = query;
+        }
+
+        return app.store.find('chatmessages', params).then((r) => {
             if (r.length) {
                 r.map((model) => {
                     if (options.withFlash) model.isNeedToFlash = true;
@@ -506,9 +518,20 @@ export default class ChatState {
     }
 
     postChatMessage(model) {
-        return model.save({ message: model.content, created_at: new Date(), chat_id: model.chat().id() }).then(
+        // Flarum 2.0's Model.save() decides POST vs PATCH from `this.exists`, but
+        // builds the URL via apiEndpoint() which appends `/<id>` whenever the `id`
+        // KEY is present in the model data — even when its value is `undefined`.
+        // The live-preview message is created with a placeholder id:0 for rendering,
+        // so we must DELETE the `id` key entirely (not set it to undefined) to make
+        // it POST to the collection api/chatmessages. Real (failed) messages being
+        // resent keep their real id and PATCH correctly.
+        if ('id' in model.data) delete model.data.id;
+
+        // Flarum 2.0's save(attributes) takes a FLAT object: the argument itself
+        // becomes the JSON:API `attributes` body. Wrapping in `{ attributes: {...} }`
+        // would double-nest it and the server would never see message/chat_id.
+        return model.save({ message: model.content, chat_id: model.chat().id() }).then(
             (r) => {
-                // another ugly workaround. I can't even imagine why pushPayload (pushObject) fails
                 model.pushData(r.data);
                 model.exists = true;
 
@@ -550,7 +573,7 @@ export default class ChatState {
 
     hideChatMessage(model, sync = false, user = app.session.user) {
         model.pushData({ relationships: { deleted_by: user } });
-        if (sync) model.save({ actions: { hide: true }, relationships: { deleted_by: app.session.user } });
+        if (sync) model.save({ actions: { hide: true } });
 
         this.totalHiddenCount++;
         m.redraw();
@@ -565,7 +588,7 @@ export default class ChatState {
             model.isNeedToFlash = true;
             delete model.data.relationships.deleted_by;
         }
-        if (sync) model.save({ actions: { hide: false }, deleted_by: 0 });
+        if (sync) model.save({ actions: { hide: false } });
 
         m.redraw();
     }

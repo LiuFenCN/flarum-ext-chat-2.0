@@ -1,10 +1,94 @@
 .ChatModal .Modal-body {
+    // Constrain modal height so buttons never go off-screen
+    max-height: 80vh;
+    overflow-y: auto;
+    overflow-x: hidden; // Prevent search/list from overflowing horizontally
+
+    // Rounded corners for the modal
+    border-radius: 12px;
+
     mark {
         background: none;
         font-weight: bold;
         border-radius: 0;
         padding: 0;
         box-shadow: none;
+    }
+
+    // Medium-sized modal for edit (more room than --small)
+    &.Modal--medium .InputTitle {
+        width: 280px;
+    }
+
+    // Small (create) modal
+    &.Modal--small .InputTitle {
+        width: 260px;
+    }
+
+    // Chat type badge in edit modal
+    .chat-type-badge {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+
+            &.badge--pm {
+                background: rgba(155, 89, 182, 0.15);
+                color: #8e44ad;
+            }
+            &.badge--channel {
+                background: rgba(52, 152, 219, 0.15);
+                color: #2980b9;
+            }
+            &.badge--group {
+                background: rgba(46, 204, 113, 0.15);
+                color: #27ae60;
+            }
+        }
+
+        .chat-id {
+            font-size: 11px;
+            color: var(--glass-text-muted);
+            opacity: 0.6;
+        }
+    }
+
+    // Admin channel selector dropdown
+    .channel-selector-wrap {
+        margin-bottom: 12px;
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--glass-text, #555);
+            margin-bottom: 4px;
+        }
+
+        select.FormControl {
+            width: 100%;
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 13px;
+            cursor: pointer;
+
+            &:focus {
+                outline: none;
+                border-color: var(--chat-accent);
+                box-shadow: 0 0 0 2px color-mix(in srgb, var(--chat-accent) 20%, transparent);
+            }
+        }
     }
 
     .ChatType {
@@ -42,21 +126,72 @@
     .Color-Input {
         position: relative;
 
-        color {
-            position: absolute;
-            height: 18px;
-            width: 18px;
-            background-color: #000;
-            display: block;
-            border-radius: 100px;
-            right: 10px;
-            top: 25%;
+        .color-input-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            .color-preview {
+                height: 28px;
+                width: 28px;
+                border-radius: 6px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                flex-shrink: 0;
+                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+                display: inline-block;
+            }
+        }
+
+        // Preset color swatch grid
+        .color-palette {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 8px;
+            max-height: 150px;
+            overflow-y: auto;
+
+            .color-swatch {
+                width: 26px;
+                height: 26px;
+                border-radius: 50%;
+                cursor: pointer;
+                border: 2px solid transparent;
+                transition: all 0.15s ease;
+                box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+                display: inline-block;
+                flex-shrink: 0;
+
+                &:hover {
+                    transform: scale(1.2);
+                    border-color: rgba(0, 0, 0, 0.3);
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+                }
+
+                &.active {
+                    border-color: var(--chat-accent);
+                    box-shadow: 0 0 0 2px color-mix(in srgb, var(--chat-accent) 40%, transparent);
+                    transform: scale(1.15);
+                }
+            }
         }
     }
 
-    icon.Chat-FullColor {
+    // Legacy: icon element inside color/icon preview spans
+    .Chat-FullColor {
         background: none !important;
         color: #000;
+
+        &.color-preview {
+            background-color: #000 !important;
+        }
+
+        &.icon-preview {
+            background: none !important;
+        }
     }
 
     .Icon-Input {
@@ -77,12 +212,24 @@
         margin: 5px 0px;
     }
 
+    .help-text {
+        display: block;
+        font-size: 12px;
+        color: var(--glass-text-muted);
+        margin-bottom: 4px;
+
+        a {
+            color: var(--chat-accent);
+            text-decoration: underline;
+        }
+    }
+
     .InputTitle {
-        width: 225px;
+        width: 260px;
         margin: auto;
 
         .ButtonsPadding {
-            height: 350px;
+            height: 16px; // Small spacer instead of 350px pusher
         }
 
         .ButtonSave {
@@ -184,7 +331,7 @@
     }
 
     .UsersTags {
-        width: 225px;
+        width: 260px;
         border-radius: 4px;
         margin: auto;
         margin-bottom: 10px;
@@ -197,6 +344,11 @@
         .IconSearchResult
         {
             position: relative;
+
+            .icon-preview {
+                background: none !important;
+                color: #000;
+            }
 
             icon {
                 display: inline-block;
@@ -220,11 +372,52 @@
                     margin-left: 175px;
                     position: fixed;
                 }
-            } 
+            }
 
             .Dropdown--Icons {
                 display: block;
                 width: 225px;
+            }
+        }
+
+        // Preset icon grid
+        .icon-palette {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 8px;
+            max-height: 160px;
+            overflow-y: auto;
+
+            .icon-swatch {
+                width: 34px;
+                height: 34px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                border-radius: 6px;
+                border: 2px solid transparent;
+                transition: all 0.15s ease;
+                color: var(--glass-text-muted);
+                font-size: 16px;
+
+                &:hover {
+                    background-color: color-mix(in srgb, var(--chat-accent) 10%, transparent);
+                    border-color: color-mix(in srgb, var(--chat-accent) 30%, transparent);
+                    color: var(--glass-text);
+                    transform: scale(1.1);
+                }
+
+                &.active {
+                    background-color: color-mix(in srgb, var(--chat-accent) 15%, transparent);
+                    border-color: var(--chat-accent);
+                    color: var(--chat-accent);
+                    box-shadow: 0 0 0 2px color-mix(in srgb, var(--chat-accent) 20%, transparent);
+                }
             }
         }
     }
@@ -277,11 +470,378 @@
         }  
 
         .Dropdown--Users {
-            width: 225px;
+            width: 260px;
         }
 
         .ModalBody--Users {
             height: 400px;
+        }
+    }
+
+    // ── User picker for private chat creation ──────────────────────
+    // NOTE: All critical visual properties use !important because Flarum's
+    // Modal global reset styles (border-radius, background, box-shadow, etc.)
+    // have high specificity and would otherwise override our custom classes.
+    .ChatSearchUser {
+        // Prevent any child from overflowing the Modal
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        max-width: 100% !important;
+        width: 100% !important;
+
+        * {
+            box-sizing: border-box !important;
+        }
+
+        // ── Search input with icon ──
+        .chat-search-input {
+            position: relative;
+            display: flex !important;
+            align-items: center !important;
+            margin-bottom: 10px !important;
+            overflow: hidden !important;
+            width: 100% !important;
+
+            .chat-search-icon {
+                position: absolute !important;
+                left: 12px !important;
+                font-size: 14px !important;
+                color: #aaa !important;
+                pointer-events: none !important;
+                z-index: 1 !important;
+            }
+
+            input.FormControl {
+                width: 100% !important;
+                padding: 9px 34px 9px 34px !important;
+                border-radius: 8px !important;
+                border: 1.5px solid rgba(0, 0, 0, 0.12) !important;
+                font-size: 13.5px !important;
+                background: #fafbfc !important;
+                transition: border-color 0.2s, box-shadow 0.2s !important;
+
+                &:focus {
+                    border-color: var(--chat-accent, #276bb0) !important;
+                    box-shadow: 0 0 0 3px color-mix(in srgb, var(--chat-accent, #276bb0) 15%, transparent) !important;
+                    outline: none !important;
+                    background: #fff !important;
+                }
+
+                &::placeholder { color: #bbb !important; }
+            }
+
+            .chat-search-clear {
+                position: absolute !important;
+                right: 8px !important;
+                width: 22px !important;
+                height: 22px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                background: rgba(0, 0, 0, 0.08) !important;
+                border: none !important;
+                border-radius: 50% !important;
+                font-size: 11px !important;
+                color: #666 !important;
+                cursor: pointer !important;
+                padding: 0 !important;
+                line-height: 1 !important;
+                transition: background 0.15s, color 0.15s !important;
+
+                &:hover {
+                    background: rgba(0, 0, 0, 0.16) !important;
+                    color: #333 !important;
+                }
+            }
+        }
+
+        // ── Results list container ──
+        .chat-user-results {
+            display: block !important;
+            list-style: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            max-height: 320px !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            border: 1.5px solid rgba(0, 0, 0, 0.09) !important;
+            border-radius: 10px !important;
+            background: #fff !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08) !important;
+
+            // Custom thin scrollbar
+            &::-webkit-scrollbar { width: 6px !important; }
+            &::-webkit-scrollbar-track { background: transparent !important; }
+            &::-webkit-scrollbar-thumb {
+                background: rgba(0, 0, 0, 0.15) !important;
+                border-radius: 3px !important;
+                &:hover { background: rgba(0, 0, 0, 0.25) !important; }
+            }
+
+            // Sticky header row
+            .chat-results-header {
+                padding: 7px 14px !important;
+                font-size: 11px !important;
+                font-weight: 700 !important;
+                color: #8898aa !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.6px !important;
+                background: color-mix(in srgb, var(--chat-accent, #276bb0) 4%, transparent) !important;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+                position: sticky !important;
+                top: 0 !important;
+                z-index: 1 !important;
+            }
+
+            // Each user row
+            .chat-user-item {
+                display: flex !important;
+                align-items: center !important;
+                gap: 10px !important;
+                padding: 9px 14px !important;
+                cursor: pointer !important;
+                transition: background 0.12s ease !important;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.03) !important;
+
+                &:last-child { border-bottom: none !important; }
+
+                &:hover {
+                    background: color-mix(in srgb, var(--chat-accent, #276bb0) 7%, #fff) !important;
+                }
+
+                // SELECTED state — very obvious visual feedback
+                &.chat-user-selected {
+                    background: color-mix(in srgb, var(--chat-accent, #276bb0) 12%, #fff) !important;
+                    border-left: 3px solid var(--chat-accent, #276bb0) !important;
+                    padding-left: 11px !important;
+
+                    .chat-user-name {
+                        font-weight: 700 !important;
+                        color: var(--chat-accent, #276bb0) !important;
+                    }
+                }
+
+                // Avatar (force size)
+                .chat-user-avatar {
+                    flex-shrink: 0 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+
+                    img.avatar, .Avatar, span[class*="Avatar"] {
+                        width: 36px !important;
+                        height: 36px !important;
+                        border-radius: 50% !important;
+                        object-fit: cover !important;
+                        border: 2px solid rgba(0, 0, 0, 0.06) !important;
+                        transition: border-color 0.15s !important;
+                    }
+                }
+
+                // Name + username column
+                .chat-user-info {
+                    flex: 1 !important;
+                    min-width: 0 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 1px !important;
+
+                    .chat-user-name {
+                        font-size: 14px !important;
+                        font-weight: 500 !important;
+                        color: #2c3e50 !important;
+                        line-height: 1.3 !important;
+                        white-space: nowrap !important;
+                        overflow: hidden !important;
+                        text-overflow: ellipsis !important;
+                    }
+
+                    .chat-user-username {
+                        font-size: 11.5px !important;
+                        color: #95a5a6 !important;
+                        line-height: 1.2 !important;
+                    }
+                }
+
+                // Checkmark for selected users
+                .chat-user-check {
+                    flex-shrink: 0 !important;
+                    width: 22px !important;
+                    height: 22px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    background: var(--chat-accent, #276bb0) !important;
+                    color: #fff !important;
+                    border-radius: 50% !important;
+                    font-size: 12px !important;
+                    font-weight: 700 !important;
+                }
+            }
+
+            // Status messages (loading / error / empty)
+            .chat-result-status {
+                padding: 20px 16px !important;
+                text-align: center !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                gap: 6px !important;
+
+                span { font-size: 13px !important; }
+                small { font-size: 11.5px !important; color: #bbb !important; }
+
+                &.chat-result-loading { color: #888 !important; }
+                &.chat-result-error { color: #c62828 !important; }
+                &.chat-result-empty { color: #999 !important; }
+            }
+        }
+
+        // ── Selected users tags area ──
+        .selected-users-section {
+            margin-top: 10px !important;
+            padding-top: 10px !important;
+            border-top: 1px dashed rgba(0, 0, 0, 0.08) !important;
+
+            .selected-label {
+                display: block !important;
+                font-size: 11px !important;
+                font-weight: 600 !important;
+                color: var(--chat-accent, #276bb0) !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.4px !important;
+                margin-bottom: 6px !important;
+            }
+
+            .UsersTags {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                gap: 5px !important;
+
+                .UserMention.deletable {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    gap: 5px !important;
+                    padding: 5px 10px !important;
+                    background: color-mix(in srgb, var(--chat-accent, #276bb0) 10%, #f0f4ff) !important;
+                    border: 1px solid color-mix(in srgb, var(--chat-accent, #276bb0) 20%, transparent) !important;
+                    border-radius: 16px !important;
+                    font-size: 12.5px !important;
+                    color: var(--chat-accent, #276bb0) !important;
+                    cursor: pointer !important;
+                    transition: all 0.15s !important;
+
+                    .mention-name { font-weight: 500 !important; }
+
+                    .mention-remove {
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        width: 15px !important;
+                        height: 15px !important;
+                        font-size: 10px !important;
+                        background: rgba(0, 0, 0, 0.08) !important;
+                        border-radius: 50% !important;
+                        color: #777 !important;
+                        transition: background 0.15s !important;
+                    }
+
+                    &:hover {
+                        background: color-mix(in srgb, var(--chat-accent, #276bb0) 18%, #e8efff) !important;
+                        border-color: color-mix(in srgb, var(--chat-accent, #276bb0) 35%, transparent) !important;
+
+                        .mention-remove {
+                            background: rgba(231, 76, 60, 0.15) !important;
+                            color: #c0392b !important;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Creator-leave options panel (transfer / disband / cancel)
+.ChatModal .creator-leave-panel {
+    margin-top: 16px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+
+    .creator-leave-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #e74c3c;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+
+    .Button {
+        margin-bottom: 6px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    .Button--danger {
+        background: #e74c3c;
+        color: #fff;
+
+        &:hover {
+            background: #c0392b;
+        }
+    }
+}
+
+// Transfer user picker list
+.transfer-user-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 8px;
+
+    .transfer-user-empty {
+        text-align: center;
+        color: #999;
+        font-size: 13px;
+        padding: 12px 0;
+    }
+
+    .transfer-user-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 10px;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: background 0.15s;
+        margin-bottom: 2px;
+
+        &:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        &.selected {
+            background: color-mix(in srgb, var(--chat-accent) 12%, transparent);
+            border: 1px solid color-mix(in srgb, var(--chat-accent) 30%, transparent);
+        }
+
+        .transfer-user-avatar {
+            flex-shrink: 0;
+            margin-right: 10px;
+        }
+
+        .transfer-user-name {
+            flex: 1;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .transfer-check {
+            color: var(--chat-accent);
+            font-weight: bold;
+            font-size: 16px;
         }
     }
 }

@@ -1,4 +1,4 @@
-import Stream from 'flarum/utils/Stream';
+import Stream from 'flarum/common/utils/Stream';
 
 export default class ViewportState {
     loadingSend = false;

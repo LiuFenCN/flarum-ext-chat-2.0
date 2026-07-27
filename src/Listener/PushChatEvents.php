@@ -96,10 +96,13 @@ class PushChatEvents
     {
         $chat = $event->chat;
 
-        $response = $this->buildResponse($chat, $event->actor, ChatResource::class, ['creator', 'users', 'last_message']);
-
+        // The chat is (or is about to be) deleted, so serializing it through
+        // the resource `show` endpoint is unreliable (the row may already be
+        // gone, or buildResponse() reconstructs a request from globals). A
+        // delete broadcast only needs the resource identifier so clients can
+        // drop it from their local store.
         $this->socket->sendChatEvent($chat->id, 'chat.delete', [
-            'chat' => $response
+            'chat' => ['type' => 'chats', 'id' => (string) $chat->id]
         ]);
     }
 
@@ -124,10 +127,10 @@ class PushChatEvents
     {
         $message = $event->message;
 
-        $response = $this->buildResponse($message, $event->actor, MessageResource::class, ['user', 'deleted_by', 'chat']);
-
+        // Same rationale as whenChatDeleting: the message is being deleted, so
+        // only its resource identifier is needed for the broadcast.
         $this->socket->sendChatEvent($message->chat_id, 'message.delete', [
-            'message' => $response
+            'message' => ['type' => 'chatmessages', 'id' => (string) $message->id]
         ]);
     }
 }

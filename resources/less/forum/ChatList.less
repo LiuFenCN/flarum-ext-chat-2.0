@@ -23,12 +23,16 @@
     .header {
         display: flex;
         justify-content: flex-end;
+        align-items: center;
         height: 35px;
         background: @glass-primary;
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
         border-bottom: 1px solid @glass-border;
         position: relative;
+        // Ensure header respects parent's top-left border-radius
+        border-radius: 16px 0 0 0;
+        overflow: hidden;
 
         p {
             position: relative;
@@ -155,7 +159,7 @@
             width: 120%;
 
             .media {
-                color: rgba(58, 182, 255, 0.8); // Adjusted for glass theme
+                color: color-mix(in srgb, var(--chat-accent) 80%, transparent); // follows forum theme accent
             }
 
             .sender {
@@ -372,25 +376,25 @@
         margin: 8px 10px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         transition: all 0.2s ease;
-        
-        &:focus-within {
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-            background: rgba(255, 255, 255, 0.12);
-        }
 
-        &:before {
-            font-family: 'Font Awesome 6 Free';
-            font-weight: 900;
-            content: "\f002";
+        // Search icon — Unicode magnifying glass (no FA dependency)
+        .input-icon {
             position: absolute;
             left: 12px;
             top: 50%;
             transform: translateY(-50%);
             color: var(--glass-text-muted);
-            font-size: 14px;
+            font-size: 13px;
             pointer-events: none;
             z-index: 2;
+            /* Ensure the emoji/Symbol renders at consistent size */
+            line-height: 1;
+        }
+
+        &:focus-within {
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            background: rgba(255, 255, 255, 0.12);
         }
 
         #chat-find {

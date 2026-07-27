@@ -1,17 +1,17 @@
-import Component from 'flarum/Component';
-import avatar from 'flarum/helpers/avatar';
-import username from 'flarum/helpers/username';
-import fullTime from 'flarum/helpers/fullTime';
-import classList from 'flarum/utils/classList';
-import humanTime from 'flarum/utils/humanTime';
-import extractText from 'flarum/utils/extractText';
-import ItemList from 'flarum/utils/ItemList';
-import SubtreeRetainer from 'flarum/utils/SubtreeRetainer';
+import Component from 'flarum/common/Component';
+import { avatar } from '../utils/compat';
+import username from 'flarum/common/helpers/username';
+import fullTime from 'flarum/common/helpers/fullTime';
+import classList from 'flarum/common/utils/classList';
+import humanTime from 'flarum/common/helpers/humanTime';
+import extractText from 'flarum/common/utils/extractText';
+import ItemList from 'flarum/common/utils/ItemList';
+import SubtreeRetainer from 'flarum/common/utils/SubtreeRetainer';
 
-import Dropdown from 'flarum/components/Dropdown';
-import Button from 'flarum/components/Button';
-import Separator from 'flarum/components/Separator';
-import Link from 'flarum/components/Link';
+import Dropdown from 'flarum/common/components/Dropdown';
+import Button from 'flarum/common/components/Button';
+import Separator from 'flarum/common/components/Separator';
+import Link from 'flarum/common/components/Link';
 
 export default class ChatMessage extends Component {
     oninit(vnode) {
@@ -161,6 +161,7 @@ export default class ChatMessage extends Component {
     }
 
     editDropDown() {
+        try {
         const items = new ItemList();
 
         if (app.chat.getPermissions().edit && this.model.user() && this.model.user() == app.session.user) {
@@ -220,6 +221,11 @@ export default class ChatMessage extends Component {
                 </Dropdown>
             </div>
         );
+        } catch (e) {
+            // Defensive: never let a missing relation/permission crash message
+            // rendering (which would blank out the whole chat history).
+            return null;
+        }
     }
 
     editDropDownTimedOut() {

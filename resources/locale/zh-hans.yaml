@@ -1,7 +1,11 @@
 # 2020-2-14 01:41:16 +0800
+# Updated: 2025-07-25 — 补全缺失的 i18n key
 
 xelson-chat:
   forum:
+    pusher_not_found: 未配置 Pusher，实时更新不可用，聊天仍可正常使用。
+    index:
+      chat_link: 聊天
     toolbar:
       title: 在线聊天室
       enable_sounds: 开启声音
@@ -11,21 +15,139 @@ xelson-chat:
       minimize: 最小化
       maximize: 窗口化
     chat:
-      placeholder: 请自觉遵守互联网相关的政策法规，严禁发布色情、暴力、反动的言论...
+      settings: 聊天设置
+      welcome:
+        header: 欢迎来到聊天室！
+        subheader: 请从左侧选择一个对话开始聊天
+      moder: 版主
+      kick: 移除
+      leave: 离开
+      rejoin: 重新加入
+      edit_modal:
+        title: 聊天设置
+        switch_channel: 切换管理的频道
+        select_channel: 选择要管理的频道
+        group_chat: 群聊
+        moderator:
+          got: 你刚刚获得了 {chatname} 的版主权限！
+          lost: 你刚刚失去了 {chatname} 的版主权限。
+        form:
+          title:
+            label: 聊天名称
+            validator: 至少 1 个字符
+          color:
+            label: 颜色
+            validator: 十六进制颜色格式
+          icon:
+            label: => core.ref.icon
+            validator: => core.ref.icon_text
+          users:
+            edit: 选择并编辑用户
+          leave: 离开聊天
+          return: 进入聊天
+          delete:
+            title: 确定要删除这个聊天吗？
+            desc: 请输入聊天名称以确认删除
+            placeholder: 聊天名称
+            button: 删除聊天
+        search:
+          placeholder: 搜索用户
+          failed: 未找到匹配的用户
+          invited: 已邀请
+        save_button: => core.ref.save_changes
+        creator_leave:
+          title: 你是该频道的创建者，离开前请选择操作
+          transfer: '转让所有权并离开'
+          disband: '解散频道'
+          cancel: '取消'
+          select_owner: 选择新的频道创建者（拥有者）
+          confirm_transfer: 确认转让
+          no_users: 频道内没有其他活跃用户，请选择解散频道
+          back: '返回'
+      list:
+        pin: 固定面板
+        unpin: 取消固定
+        placeholder: 筛选聊天
+        preview:
+          empty: 暂无消息
+        add_modal:
+          title: 选择用户
+          chat: 私聊
+          channel: 频道
+          create:
+            chat: 创建新私聊
+            channel: 创建新频道
+          alerts:
+            exists: 你已经和该用户有过私聊！
+          form:
+            title:
+              chat: 聊天名称
+              channel: 频道名称
+              validator: 至少 1 个字符
+            icon:
+              label: => core.ref.icon
+              validator: => core.ref.icon_text
+            color:
+              label: => xelson-chat.forum.chat.edit_modal.form.color.label
+              validator: => xelson-chat.forum.chat.edit_modal.form.color.validator
+            users: 已选择的用户
+          search:
+            placeholder: 搜索用户
+            failed: 未找到匹配的用户
+            invited: 已邀请
+            heading: 用户
+            more_results: 还有 {more_results} 个结果...
+            loading: 正在加载用户...
+      pm_title: "与 {name} 的私聊"
+      placeholder: 输入消息...
       message:
         actions:
           hide: 隐藏
           resend: 重新发送
+        censored: 登录后可查看此消息！
+        deleted: 删除者：
+        deleted_forever: 永久删除者：
+        you: 你
+        type:
+          url: 链接
+          event: 事件
+          code: <代码 />
+        events:
+          chat:
+            created: "{creatorname} 创建了 {chatname} 并邀请了 {usernames}"
+          pm:
+            created: "{creatorname} 创建了与 {username} 的私聊"
+          channel:
+            created: "{creatorname} 创建了频道 {chatname}"
+          title:
+            edited: "{editorname} 将聊天名称从 {old} 改为 {new}"
+          icon:
+            edited: "{editorname} 将聊天图标从 {old} 改为 {new}"
+          color:
+            edited: "{editorname} 将聊天颜色从 {old} 改为 {new}"
+          users:
+            invited: "{editorname} 邀请了 {usernames}"
+            kicked: "{editorname} 移除了 {usernames}"
+            invited_kicked: "{editorname} 邀请了 {invitednames} 并移除了 {kickednames}"
+          self:
+            leaved: "{username} 离开了聊天"
+            entered: "{username} 加入了聊天"
     errors:
       unauthenticated: 登录后才能参与聊天
       chatdenied: 您所在的用户组没有权限参与聊天
+      removed: 您已被移出该聊天
   admin:
     permissions:
       post: 聊天室：发送消息
       edit: 聊天室：编辑自己的消息
       delete: 聊天室：删除自己的消息
+      enabled: 启用聊天功能
+      create:
+        chat: 发起私聊
+        channel: 创建频道
       moderate:
         delete: 聊天室：删除消息
+        vision: 查看已删除消息
 
     settings:
       title: 聊天室设置
@@ -34,3 +156,7 @@ xelson-chat:
         title: 防刷屏
         number: 最多可连发消息数
         time: 刷屏后需等待时间
+      display:
+        title: 显示设置
+        minimize: 默认最小化
+        censor: 对未登录用户隐藏消息内容

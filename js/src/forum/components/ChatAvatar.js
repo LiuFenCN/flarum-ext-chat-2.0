@@ -1,5 +1,5 @@
-import Component from 'flarum/Component';
-import classList from 'flarum/utils/classList';
+import Component from 'flarum/common/Component';
+import classList from 'flarum/common/utils/classList';
 
 export default class ChatAvatar extends Component {
     oninit(vnode) {
@@ -44,6 +44,7 @@ export default class ChatAvatar extends Component {
     }
 
     firstLetter(string) {
+        if (!string || typeof string !== 'string') return '';
         for (let i = 0; i < string.length; i++) {
             if (this.isLetter(string[i])) return string[i];
         }

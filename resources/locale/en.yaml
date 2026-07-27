@@ -81,7 +81,9 @@ xelson-chat:
             placeholder: Search Users
             failed: No matching users found
             invited: Invited
+            heading: Users
             more_results: And {more_results} more...
+      pm_title: "Chat with {name}"
       placeholder: Type your message...
       message:
         actions:

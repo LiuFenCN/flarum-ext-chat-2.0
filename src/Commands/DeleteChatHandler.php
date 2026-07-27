@@ -38,7 +38,16 @@ class DeleteChatHandler
         $chat_id = $command->chat_id;
         $actor = $command->actor;
 
-        $chat = $this->chats->findOrFail($chat_id, $actor);
+        // Idempotent delete: if the chat is already gone (deleted on another
+        // client while realtime/Pusher is disabled, or a stale client entry),
+        // there is nothing to do. Returning early lets the controller answer
+        // 204 so the client can drop the stale entry from its local store
+        // instead of surfacing a 404 "Resource not found" error.
+        $chat = $this->chats->queryVisible($actor)->find($chat_id);
+
+        if (!$chat) {
+            return null;
+        }
 
         $users = $chat->users()->get();
 

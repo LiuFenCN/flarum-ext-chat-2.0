@@ -4,13 +4,20 @@
 @color-chatlist-bg: rgba(0, 0, 0, 0.15);
 
 @color-message-odd: rgba(0, 0, 0, 0.1);
-@color-chat-selected: rgba(0, 122, 255, 0.3);
-@color-chat-hovered: rgba(0, 122, 255, 0.15);
+// Chat accent follows the forum's configured primary theme color.
+// Flarum 2.0 exposes --primary-color (set in Admin → Appearance). We
+// reference it at runtime so the chat UI recolors automatically when the
+// admin changes the forum theme. color-mix() lets the translucent
+// selected/hover backgrounds track the accent without hardcoding RGB.
+@color-chat-selected: color-mix(in srgb, var(--chat-accent) 30%, transparent);
+@color-chat-hovered: color-mix(in srgb, var(--chat-accent) 15%, transparent);
 
-// Glass morphism base colors - lighter dark tone
-@glass-primary: rgba(0, 0, 0, 0.2);
-@glass-secondary: rgba(0, 0, 0, 0.1);
-@glass-border: rgba(255, 255, 255, 0.1);
+// Glass morphism base colors — tinted by the forum's theme accent so the
+// chat panel visually belongs to the forum instead of looking like a neutral
+// gray overlay.  colour-mix() keeps translucency for the glass effect.
+@glass-primary:   color-mix(in srgb, var(--chat-accent) 20%, transparent);
+@glass-secondary: color-mix(in srgb, var(--chat-accent) 10%, transparent);
+@glass-border: rgba(255, 255, 255, 0.15);
 
 // =========================
 // Flarum 2.0 compatibility shims
@@ -48,6 +55,11 @@
 :root {
   --glass-text: rgba(0, 0, 0, 0.87);
   --glass-text-muted: rgba(0, 0, 0, 0.54);
+  // Accent used by the chat UI — mirrors the forum's primary colour.
+  // Flarum 2.0 exposes this as --button-primary-bg (set in Admin →
+  // Appearance → Colour 1). Falls back to the admin-configured value so
+  // the chat panel recolours automatically when the theme changes.
+  --chat-accent: var(--button-primary-bg, #276bb0);
 }
 
 [data-theme^='dark'] {

@@ -21,8 +21,17 @@ trait SerializesChatData
         $resource = $this->api->getResource($resourceClass);
         $type = $resource->type();
 
+        // Build correct show path: /api/<type>/<id>
+        // dirname('/api/chatmessages/0') = '/api/chatmessages' → OK
+        // dirname('/api/chats') = '/api' → WRONG; use type instead
         $path = $request->getUri()->getPath();
-        $newPath = rtrim(dirname($path), '/') . '/' . $model->id;
+        $dir = rtrim(dirname($path), '/');
+        // If dirname lost the type segment (single-segment route like /chats),
+        // reconstruct from the resource type.
+        if (!str_ends_with($dir, $type)) {
+            $dir .= '/' . $type;
+        }
+        $newPath = $dir . '/' . $model->id;
 
         $uri = $request->getUri()
             ->withPath($newPath)

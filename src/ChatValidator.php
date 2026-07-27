@@ -13,7 +13,7 @@ use Illuminate\Validation\Rule;
 
 class ChatValidator extends AbstractValidator
 {
-	protected function getRules()
+	protected function getRules(): array
 	{		
 		return 
 		[

@@ -19,6 +19,12 @@
         flex-direction: column;
     }
 
+    // Ensure ChatList (left sidebar) clips to frame's rounded corners
+    .ChatList {
+        border-radius: 16px 0 0 16px;
+        overflow: hidden;
+    }
+
     .ChatViewport {
         flex: 1;
         max-height: 95%;
@@ -76,23 +82,28 @@
         position: relative;
         float: right;
         max-width: 100%;
-        
-        // Glass morphism styling - dark tone further lightened
-        background: rgba(0, 0, 0, 0.15);
+
+        // Glass morphism styling — tinted by forum theme accent
+        background: color-mix(in srgb, var(--chat-accent) 12%, transparent);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 16px;
-        
-        box-shadow: 
+
+        box-shadow:
             0 8px 32px rgba(0, 0, 0, 0.1),
             0 2px 16px rgba(0, 0, 0, 0.05),
             inset 0 1px 0 rgba(255, 255, 255, 0.3);
-        
+
         outline: none;
         height: 100%;
         width: 100%;
+        // Critical: clip ALL children (ChatList + chat-panel) to rounded corners
         overflow: hidden;
+        // Isolate compositing so border-radius clipping works reliably in all browsers
+        isolation: isolate;
+        // Force GPU layer so border-radius is not ignored during compositing
+        transform: translateZ(0);
 
         .censored {
             box-shadow: inset 0px 0px 0px 1000px #dedede;
@@ -112,10 +123,13 @@
 
         #chat-panel {
             width: 450px; // Reduced from 650px
+            border-radius: 0 16px 16px 0; // Match frame's right-side rounding
+            overflow: hidden; // Clip inner content to rounded corners
 
             @media @phone
             {
                 width: 100%;
+                border-radius: 16px; // Full rounding on mobile
             }
             
             // Global video constraint within chat panel
@@ -171,7 +185,7 @@
         height: 18px;
         padding: 0px 5px;
         border-radius: 18px;
-        background-color: #3ab6ff;
+        background-color: var(--chat-accent);
         z-index: 99;
         top: 0px;
         right: 5px;

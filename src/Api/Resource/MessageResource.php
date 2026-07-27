@@ -67,9 +67,12 @@ class MessageResource extends AbstractDatabaseResource
                     return $message->message;
                 }),
             Schema\Integer::make('type'),
-            Schema\Integer::make('userId'),
-            Schema\Integer::make('chatId'),
-            Schema\Integer::make('deletedBy'),
+            Schema\Integer::make('userId')
+                ->get(fn(Message $m) => (int) $m->user_id),
+            Schema\Integer::make('chatId')
+                ->get(fn(Message $m) => (int) $m->chat_id),
+            Schema\Integer::make('deletedBy')
+                ->get(fn(Message $m) => $m->deleted_by),
             Schema\Boolean::make('isReaded'),
             Schema\DateTime::make('createdAt'),
             Schema\DateTime::make('editedAt'),

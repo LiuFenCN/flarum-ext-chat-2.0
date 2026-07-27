@@ -60,10 +60,11 @@ class ChatResource extends AbstractDatabaseResource
     {
         return [
             Schema\Str::make('title'),
-            Schema\Integer::make('color'),
+            Schema\Str::make('color'),
             Schema\Str::make('icon'),
             Schema\Integer::make('type'),
-            Schema\Integer::make('creatorId'),
+            Schema\Integer::make('creatorId')
+                ->get(fn(Chat $chat) => (int) $chat->creator_id),
             Schema\DateTime::make('createdAt'),
 
             // Membership fields for the current actor (read-only, no auto-join).

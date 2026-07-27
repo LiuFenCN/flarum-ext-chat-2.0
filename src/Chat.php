@@ -16,6 +16,8 @@ class Chat extends AbstractModel
 {
     protected $table = 'neonchat_chats';
 
+    public $timestamps = false;
+
     protected $dates = ['created_at'];
 
     /**
