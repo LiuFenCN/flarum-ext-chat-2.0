@@ -17,24 +17,31 @@ export default class ChatCreateModal extends ChatModal {
     }
 
     onsubmit() {
+        // Validate that we have selected users
+        var selected = this.getSelectedUsers();
+        console.log('[ChatCreateModal] onsubmit, selectedUsers.length=', selected.length, 'isChannel=', this.isChannel);
+
+        if (!selected || selected.length === 0) {
+            app.alerts.show({ type: 'error' }, '请先选择至少一个用户');
+            return;
+        }
+
         // Check if it's a private chat with only one other user
-        if (!this.isChannel && this.getSelectedUsers().length === 1) {
-            const otherUser = this.getSelectedUsers()[0];
-            
+        if (!this.isChannel && selected.length === 1) {
+            const otherUser = selected[0];
+
             // First check for active chats
             const existingActiveChat = app.chat.findExistingPMChat(app.session.user, otherUser);
             if (existingActiveChat) {
-                // If active chat exists, just open it
                 app.chat.onChatChanged(existingActiveChat);
                 this.hide();
                 m.redraw();
                 return;
             }
-            
+
             // Then check for chats we've left
             const existingLeftChat = app.chat.findAnyPMChatIncludingLeft(app.session.user, otherUser);
             if (existingLeftChat && existingLeftChat.removed_at()) {
-                // If we've left this chat, try to rejoin it by creating with the same users
                 this.rejoinExistingChat(existingLeftChat, otherUser);
                 return;
             }
@@ -44,8 +51,31 @@ export default class ChatCreateModal extends ChatModal {
         this.createNewChat();
     }
 
+    /**
+     * Convert user objects (lightweight wrappers from ChatSearchUser or real Mithril models)
+     * into JSON:API identifier format { type: 'users', id: '...' } that Flarum's
+     * serializer expects inside relationships.
+     */
+    toUserIdentifiers(userObjs) {
+        var ids = [];
+        for (var i = 0; i < userObjs.length; i++) {
+            var u = userObjs[i];
+            try {
+                var uid = (typeof u.id === 'function') ? u.id() : (u.id || '');
+                if (uid) ids.push({ type: 'users', id: String(uid) });
+            } catch (e) {
+                console.warn('[ChatCreateModal] skipping invalid user:', e);
+            }
+        }
+        return ids;
+    }
+
     rejoinExistingChat(existingChat, otherUser) {
-        // Try to rejoin by creating with the same users - backend will handle rejoining
+        var userIds = this.toUserIdentifiers([otherUser]);
+        userIds.push({ type: 'users', id: String(app.session.user.id()) });
+
+        console.log('[ChatCreateModal] rejoinExistingChat, userIds=', JSON.stringify(userIds));
+
         app.store
             .createRecord('chats')
             .save({
@@ -53,25 +83,22 @@ export default class ChatCreateModal extends ChatModal {
                 isChannel: false,
                 icon: '',
                 color: '',
-                relationships: { users: [otherUser, app.session.user] },
+                relationships: { users: userIds },
             })
             .then((model) => {
-                // If successful, add and open the chat
                 app.chat.addChat(model);
                 app.chat.onChatChanged(model);
-                app.alerts.show({ type: 'success' }, 'Rejoined existing chat successfully!');
+                app.alerts.show({ type: 'success' }, '已重新加入聊天！');
                 m.redraw();
             })
             .catch((error) => {
-                console.error('Error rejoining chat:', error);
-                // If rejoin fails, open the existing chat anyway (if it's in our list)
-                const chatInList = app.chat.getChats().find(c => c.id() === existingChat.id());
+                console.error('[ChatCreateModal] rejoin error:', error);
+                var chatInList = app.chat.getChats().find(function(c) { return c.id() === existingChat.id(); });
                 if (chatInList) {
                     app.chat.onChatChanged(chatInList);
-                    app.alerts.show({ type: 'success' }, 'Opened existing chat.');
+                    app.alerts.show({ type: 'success' }, '已打开已有聊天');
                 } else {
-                    // Show more helpful error message
-                    app.alerts.show({ type: 'error' }, 'Unable to rejoin chat. Please search for the user manually.');
+                    app.alerts.show({ type: 'error' }, '无法重新加入聊天，请稍后重试');
                 }
                 m.redraw();
             });
@@ -79,27 +106,34 @@ export default class ChatCreateModal extends ChatModal {
     }
 
     createNewChat() {
+        var selected = this.getSelectedUsers();
+        var userIds = this.toUserIdentifiers(selected);
+        // Add current user — backend also re-adds actor but we include it for clarity
+        userIds.push({ type: 'users', id: String(app.session.user.id()) });
+
+        console.log('[ChatCreateModal] createNewChat, userIds=', JSON.stringify(userIds), 'isChannel=', this.isChannel);
+
         app.store
             .createRecord('chats')
             .save({
-                title: this.getInput().title(),
+                title: this.getInput().title() || '',
                 isChannel: this.isChannel,
-                icon: this.getInput().icon(),
-                color: this.getInput().color(),
-                relationships: { users: [...this.getSelectedUsers(), app.session.user] },
+                icon: this.getInput().icon() || '',
+                color: this.getInput().color() || '',
+                relationships: { users: userIds },
             })
             .then((model) => {
+                console.log('[ChatCreateModal] chat created, id=', model.id());
                 app.chat.addChat(model);
                 app.chat.onChatChanged(model);
                 m.redraw();
             })
             .catch((error) => {
-                console.error('Error creating chat:', error);
-                // Show more helpful error message based on error type
-                if (error.status === 400) {
-                    app.alerts.show({ type: 'error' }, 'This chat already exists. Please search for the user manually.');
+                console.error('[ChatCreateModal] create error:', error.status, error.message || error);
+                if (error.status === 400 || error.status === 422) {
+                    app.alerts.show({ type: 'error' }, '该聊天已存在，或参数有误');
                 } else {
-                    app.alerts.show({ type: 'error' }, 'Failed to create chat. Please try again.');
+                    app.alerts.show({ type: 'error' }, '创建失败（' + (error.status || '?') + '），请重试');
                 }
             });
         this.hide();
