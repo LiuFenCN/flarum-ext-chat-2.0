@@ -79,7 +79,7 @@ class ChatResource extends AbstractDatabaseResource
                 ->get($this->pivotDateTime('readed_at')),
             Schema\DateTime::make('removed_at')
                 ->get($this->pivotDateTime('removed_at')),
-            Schema\Integer::make('removedBy')
+            Schema\Integer::make('removed_by')
                 ->get($this->pivotValue('removed_by')),
             Schema\Integer::make('unreaded')
                 ->get(function (Chat $chat, Context $context) {
