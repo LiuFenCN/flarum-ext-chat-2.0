@@ -25,7 +25,7 @@ class MessageResource extends AbstractDatabaseResource
 
     /**
      * Replicates FetchMessageController: filter by `chat_id`, and optionally
-     * fetch messages newer than the `query` (message id) cursor.
+     * fetch messages OLDER than the `query` (message id) cursor for scroll-up.
      */
     public function scope(Builder $query, \Tobyz\JsonApiServer\Context $context): void
     {
@@ -35,8 +35,25 @@ class MessageResource extends AbstractDatabaseResource
             $query->where('chat_id', $chatId);
         }
 
-        if (is_numeric($queryCursor = Arr::get($params, 'query'))) {
-            $query->where('id', '>', $queryCursor);
+        // Newest first so the FIRST page (and therefore the initial chat load)
+        // shows the most recent messages. Without this the default natural
+        // order is ASC and only the OLDEST `limit` messages load — new messages
+        // never appear after refresh (chat 1: 24 msgs, page 1 returned oldest
+        // 20, today's message was stuck on page 2 and never loaded).
+        // The Index endpoint applies NO ORDER BY when defaultSort is null and
+        // the client sends no `sort` param, so this scope orderBy is the only
+        // one and is respected.
+        $query->orderBy('id', 'desc');
+
+        // `before_id` is a NUMERIC message-id cursor (named with an underscore
+        // on purpose: JsonApiServer's validateQueryParameters() rejects any
+        // param made of lowercase letters only unless it's in the
+        // include/fields/filter/page/sort allowlist — a bare `query` param
+        // returns HTTP 400 "Invalid query parameter"). When present, return
+        // messages OLDER than it (scroll-up history). Matches the original
+        // Xelson Chat FetchMessageController semantics.
+        if (is_numeric($queryCursor = Arr::get($params, 'before_id'))) {
+            $query->where('id', '<', $queryCursor);
         }
     }
 

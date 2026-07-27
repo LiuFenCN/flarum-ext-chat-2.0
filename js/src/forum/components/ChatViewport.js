@@ -272,13 +272,18 @@ export default class ChatViewport extends Component {
         if (!this.state.messageEditing && el.scrollTop >= 0) {
             if (el.scrollTop <= 500) {
                 let topMessage = app.chat.getChatMessages((model) => model.chat() == this.model)[0];
-                if (topMessage && topMessage != this.model.first_message() && topMessage.created_at()) {
-                    app.chat.apiFetchChatMessages(this.model, topMessage.created_at().toISOString());
+                if (topMessage && topMessage != this.model.first_message() && topMessage.id()) {
+                    // Pass the message ID (not a date string) as the cursor:
+                    // MessageResource.scope() treats `query` as a numeric id and
+                    // returns messages OLDER than it (scroll-up history).
+                    app.chat.apiFetchChatMessages(this.model, topMessage.id());
                 }
             } else if (el.scrollTop + el.offsetHeight >= currentHeight - 500) {
                 let bottomMessage = app.chat.getChatMessages((model) => model.chat() == this.model).slice(-1)[0];
-                if (bottomMessage && bottomMessage != this.model.last_message() && bottomMessage.created_at()) {
-                    app.chat.apiFetchChatMessages(this.model, bottomMessage.created_at().toISOString());
+                if (bottomMessage && bottomMessage != this.model.last_message() && bottomMessage.id()) {
+                    // Newer messages are picked up by the 5s poll. Re-fetch the
+                    // newest page (no cursor) so dedup refreshes the tail.
+                    app.chat.apiFetchChatMessages(this.model);
                 }
             }
         }

@@ -277,14 +277,14 @@ export default class ChatState {
         viewport.loading = true;
         viewport.loadingQueries[query] = true;
 
-        // Build params: always include chat_id; only include query cursor when
-        // it is numeric (message-ID based).  ISO date strings are NOT accepted
-        // by MessageResource::scope() AND Flarum 2.0's JSON:API server rejects
-        // unknown query parameters with 400 "Invalid query parameter".
-        // Date-based pagination needs a separate filter param (TODO).
+        // Build params: always include chat_id; only include the `before_id`
+        // cursor when it is numeric (message-ID based).  ISO date strings are
+        // NOT accepted by MessageResource::scope() and a bare `query` param is
+        // rejected by Flarum 2.0's JSON:API server (400 "Invalid query
+        // parameter"), so we use `before_id` (underscore => passes validation).
         let params = { chat_id: model.id() };
         if (query != null && !isNaN(Number(query))) {
-            params.query = query;
+            params.before_id = query;
         }
 
         return app.store.find('chatmessages', params).then((r) => {
