@@ -272,23 +272,27 @@ export default class ChatSearchUser {
             this._selectedIds.add(uid);
         }
 
-        // Sync to parent state (app.search.neonchat.usersSelected) so that
-        // ChatModal's getSelectedUsers() and the "创建" button see the same list.
+        // Sync to parent state. IMPORTANT: in Mithril v2 the component constructor
+        // does NOT receive props (this.props is undefined), so we MUST read the
+        // global app.search.neonchat — which is exactly what ChatModal.getSelectedUsers()
+        // reads. Relying on this.props.state.neonchat here silently failed (threw,
+        // swallowed by try/catch) and the selection never propagated, leaving the
+        // "创建" button permanently disabled.
         try {
-            if (this.props.state && this.props.state.neonchat) {
-                var parentList = this.props.state.neonchat.usersSelected;
-                if (parentList && Array.isArray(parentList)) {
-                    // Rebuild parent list from our Set to stay in sync
-                    var newList = [];
-                    var self = this;
-                    // We need to find the actual user objects from this.users
-                    this.users.forEach(function (u) {
-                        if (self._selectedIds.has(u.id())) newList.push(u);
-                    });
-                    // Replace contents (not reassign) so parent's ref stays valid
-                    parentList.splice(0, parentList.length);
-                    newList.forEach(function (u) { parentList.push(u); });
-                }
+            if (app.search && app.search.neonchat && Array.isArray(app.search.neonchat.usersSelected)) {
+                var parentList = app.search.neonchat.usersSelected;
+                // Rebuild parent list from our Set to stay in sync
+                var newList = [];
+                var self = this;
+                // We need to find the actual user objects from this.users
+                this.users.forEach(function (u) {
+                    if (self._selectedIds.has(u.id())) newList.push(u);
+                });
+                // Replace contents (not reassign) so parent's ref stays valid
+                parentList.splice(0, parentList.length);
+                newList.forEach(function (u) { parentList.push(u); });
+            } else {
+                console.warn('[ChatSearchUser] app.search.neonchat unavailable — selection not synced to parent');
             }
         } catch (e) {
             console.warn('[ChatSearchUser] sync to parent failed:', e);

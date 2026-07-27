@@ -22,6 +22,29 @@ export default class ChatViewport extends Component {
     oncreate(vnode) {
         super.oncreate(vnode);
         this.loadChat();
+
+        // Real-time fallback: Pusher is not configured on this site, so messages
+        // sent by others don't arrive automatically. Poll the current chat every
+        // few seconds so new messages appear in the viewport without a manual page
+        // refresh. apiFetchChatMessages dedupes by id, so re-fetching is safe.
+        this._pollTimer = setInterval(() => {
+            if (this.model && app.chat && app.chat.chatIsShown()) {
+                app.chat.apiFetchChatMessages(this.model).then(() => {
+                    let list = app.chat.getChatMessages((mdl) => mdl.chat() == this.model);
+                    if (list.length) {
+                        let latest = list[list.length - 1];
+                        if (latest && this.model.last_message() != latest) {
+                            this.model.pushData({ relationships: { last_message: latest } });
+                        }
+                    }
+                });
+            }
+        }, 5000);
+    }
+
+    onremove(vnode) {
+        super.onremove(vnode);
+        if (this._pollTimer) clearInterval(this._pollTimer);
     }
 
     onupdate(vnode) {
