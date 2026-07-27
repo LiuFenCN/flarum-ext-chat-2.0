@@ -40,7 +40,7 @@ class ReadChatHandler
 
         $chatUser = $chat->getChatUser($actor);
 
-        $actor->assertPermission($chatUser);
+        $actor->assertPermission(!is_null($chatUser));
 
         $time = new Carbon($readed_at);
         if ($chatUser->removed_at && $time > $chatUser->removed_at) $time = $chatUser->removed_at;
