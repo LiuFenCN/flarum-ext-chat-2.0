@@ -98,6 +98,7 @@ export default class ChatViewport extends Component {
                         )}
                     </div>
                     <ChatInput
+                        key="chat-input"
                         state={this.state}
                         model={this.model}
                         oninput={() => {
@@ -106,7 +107,7 @@ export default class ChatViewport extends Component {
                             }
                         }}
                     ></ChatInput>
-                    {this.isFastScrollAvailable() ? this.componentScroller() : null}
+                    {this.isFastScrollAvailable() ? this.componentScroller() : []}
                 </div>
             );
         }
@@ -133,18 +134,23 @@ export default class ChatViewport extends Component {
 
     componentScroller() {
         return (
-            <div className="scroller" onclick={this.fastScroll.bind(this)}>
+            <div key="chat-scroller" className="scroller" onclick={this.fastScroll.bind(this)}>
                 <i class="fas fa-angle-down"></i>
             </div>
         );
     }
 
     componentLoader(watch) {
+        // Return an empty array (NOT null) when not loading: a `null` hole mixed
+        // with the keyed message vnodes in the .wrapper fragment triggers
+        // Mithril's "vnodes must all have keys or none have keys" error and
+        // cascades into Node.removeChild crashes. When loading, the loader is
+        // itself keyed so the fragment stays consistently keyed.
         return watch ? (
-            <msgloader className="message-wrapper--loading">
+            <msgloader key="chat-loader" className="message-wrapper--loading">
                 <LoadingIndicator className="loading-old Button-icon" />
             </msgloader>
-        ) : null;
+        ) : [];
     }
     getChatWrapper() {
         if (app.screen() === 'phone' && app.current.matches(ChatPage)) {
