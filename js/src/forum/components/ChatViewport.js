@@ -85,6 +85,7 @@ export default class ChatViewport extends Component {
             return (
                 <div className="ChatViewport">
                     <div
+                        key={this.model ? this.model.id() : 'empty'}
                         className="wrapper"
                         oncreate={this.wrapperOnCreate.bind(this)}
                         onbeforeupdate={this.wrapperOnBeforeUpdate.bind(this)}
@@ -127,7 +128,7 @@ export default class ChatViewport extends Component {
     }
 
     componentsChatMessages(chat) {
-        return app.chat.getChatMessages().map((model) => this.componentChatMessage(model));
+        return app.chat.getChatMessages((mdl) => mdl.chat() == chat).map((model) => this.componentChatMessage(model));
     }
 
     componentScroller() {
