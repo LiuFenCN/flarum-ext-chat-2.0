@@ -92,13 +92,20 @@ return [
         }),
 
     (new Extend\Settings())
-        ->serializeToForum('xelson-chat.settings.charlimit', 'xelson-chat.settings.charlimit', '0')
-        ->serializeToForum('xelson-chat.settings.display.minimize', 'xelson-chat.settings.display.minimize', '0')
-        ->serializeToForum('xelson-chat.settings.display.censor', 'xelson-chat.settings.display.censor', '1')
-        ->serializeToForum('xelson-chat.settings.block_guests', 'xelson-chat.settings.block_guests', '1')
-        ->serializeToForum('xelson-chat.settings.channel_retention', 'xelson-chat.settings.channel_retention', '2')
-        ->serializeToForum('xelson-chat.settings.pm_retention', 'xelson-chat.settings.pm_retention', '30')
-        ->serializeToForum('xelson-chat.settings.email_reminder_days', 'xelson-chat.settings.email_reminder_days', '0'),
+        ->serializeToForum('xelson-chat.settings.charlimit', 'xelson-chat.settings.charlimit')
+        ->serializeToForum('xelson-chat.settings.display.minimize', 'xelson-chat.settings.display.minimize')
+        ->serializeToForum('xelson-chat.settings.display.censor', 'xelson-chat.settings.display.censor')
+        ->serializeToForum('xelson-chat.settings.block_guests', 'xelson-chat.settings.block_guests')
+        ->serializeToForum('xelson-chat.settings.channel_retention', 'xelson-chat.settings.channel_retention')
+        ->serializeToForum('xelson-chat.settings.pm_retention', 'xelson-chat.settings.pm_retention')
+        ->serializeToForum('xelson-chat.settings.email_reminder_days', 'xelson-chat.settings.email_reminder_days')
+        ->default('xelson-chat.settings.charlimit', '0')
+        ->default('xelson-chat.settings.display.minimize', '0')
+        ->default('xelson-chat.settings.display.censor', '1')
+        ->default('xelson-chat.settings.block_guests', '1')
+        ->default('xelson-chat.settings.channel_retention', '2')
+        ->default('xelson-chat.settings.pm_retention', '30')
+        ->default('xelson-chat.settings.email_reminder_days', '0'),
 
     (new Extend\ThrottleApi())
         ->set('chat-message', ChatMessage::class),

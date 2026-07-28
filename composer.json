@@ -11,10 +11,10 @@
         "realtime"
     ],
     "type": "flarum-extension",
-    "license": "MIT",
+    "license": "CC-BY-NC-4.0",
     "support": {
-        "issues": "https://github.com/acolasialiuliu/flarum-ext-chat/issues",
-        "source": "https://github.com/acolasialiuliu/flarum-ext-chat"
+        "issues": "https://github.com/LiuFenCN/flarum-ext-chat-2.0/issues",
+        "source": "https://github.com/LiuFenCN/flarum-ext-chat-2.0"
     },
     "authors": [
         {
@@ -35,6 +35,10 @@
         },
         {
             "name": "acolasialiuliu"
+        },
+        {
+            "name": "LiuFenCN",
+            "homepage": "https://github.com/LiuFenCN"
         }
     ],
     "require": {
