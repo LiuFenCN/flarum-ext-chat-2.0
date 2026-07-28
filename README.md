@@ -1,6 +1,6 @@
 # Neon Chat (Flarum 2.0)
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-CC--BY--NC%204.0-lightgrey.svg)](LICENSE)
 
 **Flarum 2.0 实时聊天室扩展** — 为你的 Flarum 论坛添加原生实时聊天功能。
 
@@ -91,4 +91,6 @@ Flarum 2.0 适配：[acolasialiuliu](https://github.com/LiuFenCN)
 
 ## 许可证 / License
 
-[MIT](LICENSE)
+[CC-BY-NC-4.0](LICENSE) — 禁止未经授权的商业使用。
+
+This project is licensed under [CC-BY-NC-4.0](LICENSE). Commercial use requires explicit permission from the copyright holder.
