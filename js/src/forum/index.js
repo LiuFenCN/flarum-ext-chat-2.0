@@ -90,9 +90,13 @@ app.initializers.add('acolasialiuliu-chat', (app) => {
       flarumExtend(Application.prototype, 'mount', function () {
         if (!app.forum.attribute('xelson-chat.permissions.enabled')) return;
 
-        // Block guests from using chat when setting is enabled
+        // Block guests from using chat when setting is enabled.
+        // Flarum 2.0: Guest extends User but isGuest() ONLY exists on the
+        // Guest class — a logged-in User has no isGuest() method, so calling
+        // it crashes mount. Use id() === null to detect guests instead.
         var blockGuests = app.forum.attribute('xelson-chat.settings.block_guests');
-        if (blockGuests && (!app.session.user || app.session.user.isGuest())) {
+        var isGuest = !app.session.user || app.session.user.id() === null;
+        if (blockGuests && blockGuests !== '0' && isGuest) {
           console.log('[chat] Chat is disabled for guests');
           return;
         }
