@@ -1,6 +1,6 @@
 # Neon Chat (Flarum 2.0)
 
-[![License](https://img.shields.io/badge/license-CC--BY--NC%204.0-lightgrey.svg)](LICENSE)
+[[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)](LICENSE)
 
 **Flarum 2.0 实时聊天室扩展** — 为你的 Flarum 论坛添加原生实时聊天功能。
 
@@ -94,6 +94,13 @@ Flarum 2.0 适配：[acolasialiuliu](https://github.com/LiuFenCN)
 
 ## 许可证 / License
 
-[CC-BY-NC-4.0](LICENSE) — 禁止未经授权的商业使用。
+[MIT](LICENSE)
 
-This project is licensed under [CC-BY-NC-4.0](LICENSE). Commercial use requires explicit permission from the copyright holder.
+本项目 fork 自 [MissGamerz/flarum-ext-chat](https://github.com/MissGamerz/flarum-ext-chat)（上游为 MIT 许可），
+因此整体继续以 **MIT** 许可发布，并保留原作者版权声明。你可以自由使用、修改与再分发（包含商业用途与闭源），
+只需保留本许可与版权声明。
+
+This project is a fork of [MissGamerz/flarum-ext-chat](https://github.com/MissGamerz/flarum-ext-chat),
+which is licensed under the **MIT** license. It is therefore distributed under the same MIT license,
+keeping the original copyright notices. You are free to use, modify and redistribute it, including
+commercially, as long as this license and the copyright notice are kept.
