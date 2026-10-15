@@ -104,3 +104,13 @@ This project is a fork of [MissGamerz/flarum-ext-chat](https://github.com/MissGa
 which is licensed under the **MIT** license. It is therefore distributed under the same MIT license,
 keeping the original copyright notices. You are free to use, modify and redistribute it, including
 commercially, as long as this license and the copyright notice are kept.
+
+---
+
+## Contact / 联系作者
+
+| Channel | Address |
+|---|---|
+| 🏝️ Forum (CatIsland) | https://bbs.cathi.cn |
+| 💬 QQ Group | 369748859 |
+| 📮 Email | 792818521@qq.com |
